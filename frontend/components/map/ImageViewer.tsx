@@ -30,7 +30,7 @@ export default function ImageViewer({ photos, index, onIndexChange, onClose }: P
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-5 text-white/70 hover:text-white text-4xl z-10 leading-none"
+        className="absolute top-4 right-4 text-white/70 hover:text-white text-4xl z-10 leading-none p-2 -m-2"
         aria-label="Close"
       >
         ×
@@ -39,7 +39,7 @@ export default function ImageViewer({ photos, index, onIndexChange, onClose }: P
       {/* Prev */}
       {index > 0 && (
         <button
-          className="absolute left-4 text-white/60 hover:text-white text-5xl z-10 px-3 py-6 select-none"
+          className="absolute left-2 sm:left-4 text-white/60 hover:text-white text-5xl z-10 px-2 sm:px-3 py-8 select-none"
           onClick={(e) => { e.stopPropagation(); onIndexChange(index - 1); }}
           aria-label="Previous"
         >
@@ -48,7 +48,7 @@ export default function ImageViewer({ photos, index, onIndexChange, onClose }: P
       )}
 
       {/* Image */}
-      <div className="max-w-5xl w-full px-16" onClick={(e) => e.stopPropagation()}>
+      <div className="max-w-5xl w-full px-12 sm:px-16" onClick={(e) => e.stopPropagation()}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={photo.url}
@@ -84,7 +84,7 @@ export default function ImageViewer({ photos, index, onIndexChange, onClose }: P
       {/* Next */}
       {index < photos.length - 1 && (
         <button
-          className="absolute right-4 text-white/60 hover:text-white text-5xl z-10 px-3 py-6 select-none"
+          className="absolute right-2 sm:right-4 text-white/60 hover:text-white text-5xl z-10 px-2 sm:px-3 py-8 select-none"
           onClick={(e) => { e.stopPropagation(); onIndexChange(index + 1); }}
           aria-label="Next"
         >

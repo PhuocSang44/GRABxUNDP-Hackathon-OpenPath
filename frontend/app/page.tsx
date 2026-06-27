@@ -20,7 +20,7 @@ export default async function Home() {
         </div>
         <div>
           <h1 className="font-bold text-gray-900 leading-none text-sm">AccessibleMap</h1>
-          <p className="text-xs text-gray-500 leading-none mt-0.5">
+          <p className="hidden sm:block text-xs text-gray-500 leading-none mt-0.5">
             Ho Chi Minh City — Wheelchair Accessibility
           </p>
         </div>

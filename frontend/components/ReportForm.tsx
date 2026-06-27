@@ -87,7 +87,11 @@ export default function ReportForm({ lat, lng, onClose, onSubmitSuccess, onCateg
   const cfg = CATEGORY_CONFIG[category];
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl w-80 overflow-hidden max-h-[calc(100vh-6rem)] flex flex-col">
+    <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:w-80 overflow-hidden max-h-[90vh] md:max-h-[calc(100vh-6rem)] flex flex-col">
+      {/* Mobile drag handle */}
+      <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+        <div className="w-10 h-1 rounded-full bg-gray-300" />
+      </div>
       {/* Category-coloured accent bar */}
       <div className="h-1 shrink-0 transition-colors duration-200" style={{ backgroundColor: cfg.color }} />
 
@@ -107,7 +111,7 @@ export default function ReportForm({ lat, lng, onClose, onSubmitSuccess, onCateg
         </div>
         <button
           onClick={onClose}
-          className="text-gray-300 hover:text-gray-500 transition-colors mt-0.5 shrink-0"
+          className="text-gray-300 hover:text-gray-500 transition-colors mt-0.5 shrink-0 p-2 -m-2"
           aria-label="Close"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

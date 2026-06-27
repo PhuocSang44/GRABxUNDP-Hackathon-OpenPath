@@ -30,7 +30,18 @@ export default function FilterPanel({ filters, onChange, visible, onClose, total
   const allSelected = filters.categories.length === 0;
 
   return (
-    <div className="absolute top-0 left-0 h-full w-72 bg-white shadow-2xl z-20 flex flex-col">
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className="md:hidden fixed inset-0 bg-black/30 z-[15]"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="absolute bottom-0 left-0 right-0 md:top-0 md:bottom-auto md:right-auto md:h-full md:w-72 bg-white shadow-2xl z-20 flex flex-col rounded-t-2xl md:rounded-none max-h-[85vh] md:max-h-none overflow-hidden">
+      {/* Mobile drag handle */}
+      <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+        <div className="w-10 h-1 rounded-full bg-gray-300" />
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
         <div>
@@ -41,7 +52,7 @@ export default function FilterPanel({ filters, onChange, visible, onClose, total
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+          className="text-gray-400 hover:text-gray-600 text-xl leading-none p-2 -m-2"
         >
           ×
         </button>
@@ -128,14 +139,15 @@ export default function FilterPanel({ filters, onChange, visible, onClose, total
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-gray-100 shrink-0">
+      <div className="px-4 py-3 border-t border-gray-100 shrink-0 pb-safe">
         <button
           onClick={() => onChange(DEFAULT_FILTERS)}
-          className="w-full py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          className="w-full py-2.5 md:py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
         >
           Reset all filters
         </button>
       </div>
     </div>
+    </>
   );
 }
