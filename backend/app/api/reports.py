@@ -7,7 +7,7 @@ from app.db.database import SessionLocal
 from app.models.accessibility_point import AccessibilityPoint
 from app.models.user import User
 from app.core.supabase import supabase
-from app.api.auth import get_current_user
+from app.api.auth import get_current_user, get_admin_user
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -59,3 +59,91 @@ def create_report(
     db.refresh(new_report)
     
     return {"message": "Report created successfully", "id": new_report.id}
+
+@router.get("/unverified")
+def list_unverified_reports(
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    points = db.query(AccessibilityPoint).filter(
+        AccessibilityPoint.is_community_report == True,
+        AccessibilityPoint.verified == False
+    ).order_by(AccessibilityPoint.last_updated.desc()).all()
+    
+    return [
+        {
+            "id": p.id,
+            "category": p.category,
+            "description": p.description,
+            "photo_url": p.photo_url,
+            "lat": p.lat,
+            "lng": p.lng,
+            "last_updated": p.last_updated.isoformat() if p.last_updated else None,
+        }
+        for p in points
+    ]
+
+@router.patch("/{report_id}/verify")
+def verify_report(
+    report_id: int,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    report = db.query(AccessibilityPoint).filter(AccessibilityPoint.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    report.verified = True
+    db.commit()
+    return {"message": "Report verified successfully"}
+
+@router.delete("/{report_id}")
+def reject_report(
+    report_id: int,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    report = db.query(AccessibilityPoint).filter(AccessibilityPoint.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    db.delete(report)
+    db.commit()
+    return {"message": "Report rejected and deleted successfully"}
+
+@router.get("/verified")
+def list_verified_reports(
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    points = db.query(AccessibilityPoint).filter(
+        AccessibilityPoint.is_community_report == True,
+        AccessibilityPoint.verified == True
+    ).order_by(AccessibilityPoint.last_updated.desc()).all()
+    
+    return [
+        {
+            "id": p.id,
+            "category": p.category,
+            "description": p.description,
+            "photo_url": p.photo_url,
+            "lat": p.lat,
+            "lng": p.lng,
+            "last_updated": p.last_updated.isoformat() if p.last_updated else None,
+        }
+        for p in points
+    ]
+
+@router.patch("/{report_id}/hide")
+def hide_report(
+    report_id: int,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    report = db.query(AccessibilityPoint).filter(AccessibilityPoint.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    report.verified = False
+    db.commit()
+    return {"message": "Report hidden successfully"}
