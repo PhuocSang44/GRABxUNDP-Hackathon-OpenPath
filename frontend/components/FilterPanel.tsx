@@ -152,6 +152,43 @@ export default function FilterPanel({ filters, onChange, visible, onClose, total
             <span>100</span>
           </div>
         </div>
+
+        {/* Toggles */}
+        <div className="px-4 py-3 space-y-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">
+            Features
+          </span>
+          <Toggle
+            label="Verified only"
+            checked={filters.verifiedOnly}
+            onChange={(v) => onChange({ ...filters, verifiedOnly: v })}
+          />
+          <Toggle
+            label="Ramp available"
+            checked={filters.hasRamp}
+            onChange={(v) => onChange({ ...filters, hasRamp: v })}
+          />
+          <Toggle
+            label="Accessible toilet"
+            checked={filters.hasToilet}
+            onChange={(v) => onChange({ ...filters, hasToilet: v })}
+          />
+          <Toggle
+            label="Parking available"
+            checked={filters.hasParking}
+            onChange={(v) => onChange({ ...filters, hasParking: v })}
+          />
+          <Toggle
+            label="Elevator access"
+            checked={filters.hasElevator}
+            onChange={(v) => onChange({ ...filters, hasElevator: v })}
+          />
+          <Toggle
+            label="Community reports only"
+            checked={filters.communityReportsOnly}
+            onChange={(v) => onChange({ ...filters, communityReportsOnly: v })}
+          />
+        </div>
       </div>
 
       {/* Footer */}

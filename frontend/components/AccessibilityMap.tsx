@@ -18,6 +18,7 @@ import FilterPanel from "./FilterPanel";
 import PointPopup from "./PointPopup";
 import Legend from "./Legend";
 import ClusterGallery from "./map/ClusterGallery";
+import ReportForm from "./ReportForm";
 
 interface Props {
   points: AccessibilityPoint[];
@@ -47,7 +48,7 @@ function buildGeoJSON(points: AccessibilityPoint[]): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
     features: points.map((p) => {
-      const photos = getPointPhotos(p.id, p.category);
+      const photos = getPointPhotos(p);
       return {
         type: "Feature",
         id: p.id,
@@ -98,6 +99,7 @@ export default function AccessibilityMap({ points }: Props) {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [reportLocation, setReportLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const filtered = useMemo(() => applyFilters(points, filters), [points, filters]);
 
@@ -143,7 +145,7 @@ export default function AccessibilityMap({ points }: Props) {
         paint: { "circle-radius": 0, "circle-opacity": 0 },
       });
 
-      // syncMarkers runs on idle: after every animation completes and all tiles
+      // syncMarkers runs on render: after every animation completes and all tiles
       // have loaded. At that point querySourceFeatures returns a single consistent
       // zoom-level snapshot — no overlap between clustered and unclustered features
       // from transitional tile sets, and no markers floating mid-animation.
@@ -175,14 +177,9 @@ export default function AccessibilityMap({ points }: Props) {
           const gradA = count >= 30 ? "#1d4ed8" : count >= 10 ? "#3b82f6" : "#60a5fa";
           const gradB = count >= 30 ? "#1e3a8a" : count >= 10 ? "#2563eb" : "#3b82f6";
 
-          // wrapper: the element MapLibre controls. MapLibre sets transform:translate()
-          // on this element — opacity transition is safe here because MapLibre never
-          // touches opacity on non-draggable markers.
           const wrapper = document.createElement("div");
           wrapper.style.cssText = `width:${circleSize}px;height:${circleSize}px;opacity:0;transition:opacity 0.2s ease;`;
 
-          // circle: the visible element inside the wrapper. Hover scale and transitions
-          // live here so they never collide with MapLibre's translate on the wrapper.
           const circle = document.createElement("div");
           circle.style.cssText = [
             `position:relative;overflow:visible;`,
@@ -207,8 +204,6 @@ export default function AccessibilityMap({ points }: Props) {
           circle.appendChild(iconEl);
           circle.appendChild(countEl);
 
-          // Thumbnail overflows the circle via absolute positioning without
-          // affecting the wrapper's dimensions or anchor calculation.
           const thumbDiv = document.createElement("div");
           thumbDiv.style.cssText = [
             `position:absolute;top:-${thumbOverflow}px;right:-${thumbOverflow}px;`,
@@ -220,11 +215,11 @@ export default function AccessibilityMap({ points }: Props) {
           circle.appendChild(thumbDiv);
           wrapper.appendChild(circle);
 
-          // Hover and click on wrapper; scale applied to circle only.
           wrapper.addEventListener("mouseenter", () => { circle.style.transform = "scale(1.1)"; });
           wrapper.addEventListener("mouseleave", () => { circle.style.transform = ""; });
 
-          wrapper.addEventListener("click", async () => {
+          wrapper.addEventListener("click", async (e) => {
+            e.stopPropagation();
             try {
               const zoom = await source.getClusterExpansionZoom(clusterId);
               map.easeTo({ center: coords, zoom, duration: 500 });
@@ -234,10 +229,11 @@ export default function AccessibilityMap({ points }: Props) {
               const items: GalleryItem[] = leaves.flatMap((leaf) => {
                 if (!leaf.properties?.data) return [];
                 const pt: AccessibilityPoint = JSON.parse(leaf.properties.data);
-                const photos = getPointPhotos(pt.id, pt.category);
+                const photos = getPointPhotos(pt);
                 return photos.length > 0 ? [{ point: pt, photo: photos[0] }] : [];
               });
               setSelected(null);
+              setReportLocation(null);
               if (items.length > 0) setGalleryItems(items);
             } catch { /* ignore */ }
           });
@@ -296,13 +292,9 @@ export default function AccessibilityMap({ points }: Props) {
           const cfg = CATEGORY_CONFIG[pt.category];
           if (!cfg) continue; // skip if backend returns a category not in our config
 
-          // wrapper: MapLibre sets transform:translate() here to position the marker.
-          // opacity transition is safe — MapLibre never touches opacity on static markers.
           const wrapper = document.createElement("div");
           wrapper.style.cssText = "width:40px;height:40px;opacity:0;transition:opacity 0.2s ease;";
 
-          // circle: the visible element. Transitions and hover scale live here so
-          // they never overwrite MapLibre's translate on the wrapper.
           const circle = document.createElement("div");
           circle.setAttribute("role", "button");
           circle.setAttribute("aria-label", cfg.label);
@@ -323,7 +315,6 @@ export default function AccessibilityMap({ points }: Props) {
           circle.appendChild(iconEl);
           wrapper.appendChild(circle);
 
-          // Hover and click on wrapper; scale applied to circle only.
           wrapper.addEventListener("mouseenter", () => {
             circle.style.transform = "scale(1.12)";
             circle.style.boxShadow = "0 4px 16px rgba(0,0,0,0.36),0 0 0 1.5px rgba(0,0,0,0.08)";
@@ -335,6 +326,7 @@ export default function AccessibilityMap({ points }: Props) {
           wrapper.addEventListener("click", (e) => {
             e.stopPropagation();
             setGalleryItems([]);
+            setReportLocation(null);
             setSelected(pt);
           });
 
@@ -356,10 +348,6 @@ export default function AccessibilityMap({ points }: Props) {
         }
       };
 
-      // Sync on the earliest render frame where the map has stopped moving
-      // AND the GeoJSON source has recomputed its tiles. Using render-frame
-      // polling avoids the gap between moveend and the sourcedata event that
-      // made clustering updates feel delayed.
       let syncNeeded = true;
 
       const trySync = () => {
@@ -369,10 +357,16 @@ export default function AccessibilityMap({ points }: Props) {
       };
 
       map.on("render", trySync);
-      // Flag a sync whenever the camera moves or source data changes.
       map.on("movestart", () => { syncNeeded = true; });
       map.on("sourcedata", (e) => {
         if (e.sourceId === "points") syncNeeded = true;
+      });
+
+      // Open ReportForm when clicking empty map area (markers call stopPropagation)
+      map.on("click", (e) => {
+        setSelected(null);
+        setGalleryItems([]);
+        setReportLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
       });
 
       mapLoadedRef.current = true;
@@ -400,6 +394,27 @@ export default function AccessibilityMap({ points }: Props) {
     );
   }, [filtered]);
 
+  const handleCurrentLocationReport = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (mapRef.current) {
+          mapRef.current.easeTo({ center: [longitude, latitude], zoom: 16, duration: 600 });
+        }
+        setSelected(null);
+        setGalleryItems([]);
+        setReportLocation({ lat: latitude, lng: longitude });
+      },
+      () => {
+        alert("Unable to retrieve your location. Please check your browser permissions.");
+      }
+    );
+  };
+
   const hasActiveFilters =
     filters.categories.length > 0 ||
     filters.minScore > 0 ||
@@ -414,6 +429,7 @@ export default function AccessibilityMap({ points }: Props) {
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
 
+      {/* Filter toggle */}
       <button
         onClick={() => setFiltersVisible((v) => !v)}
         className={`absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl shadow-md text-sm font-medium transition-colors ${
@@ -462,6 +478,32 @@ export default function AccessibilityMap({ points }: Props) {
       />
 
       <Legend />
+
+      {/* Report at current location button */}
+      <button
+        onClick={handleCurrentLocationReport}
+        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 hover:bg-blue-700 hover:shadow-xl transition-all"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Report at Current Location
+      </button>
+
+      {reportLocation && (
+        <div className="absolute top-4 right-4 z-10">
+          <ReportForm
+            lat={reportLocation.lat}
+            lng={reportLocation.lng}
+            onClose={() => setReportLocation(null)}
+            onSubmitSuccess={() => {
+              setReportLocation(null);
+              window.location.reload();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

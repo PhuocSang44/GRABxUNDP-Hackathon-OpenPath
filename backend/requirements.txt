@@ -8,4 +8,4 @@ alembic
 geoalchemy2
 shapely
 supabase
-
+python-multipart
