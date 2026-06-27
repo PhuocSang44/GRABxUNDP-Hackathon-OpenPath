@@ -11,6 +11,7 @@ import {
   DEFAULT_FILTERS,
   FilterState,
   GalleryItem,
+  PointCategory,
 } from "@/lib/types";
 import { CATEGORY_CONFIG } from "@/lib/markers";
 import { getPointPhotos } from "@/lib/photos";
@@ -34,12 +35,6 @@ function applyFilters(points: AccessibilityPoint[], f: FilterState): Accessibili
   return points.filter((p) => {
     if (f.categories.length > 0 && !f.categories.includes(p.category)) return false;
     if (p.accessibility_score < f.minScore) return false;
-    if (f.verifiedOnly && !p.verified) return false;
-    if (f.hasRamp && !p.has_ramp) return false;
-    if (f.hasToilet && !p.has_toilet) return false;
-    if (f.hasParking && !p.has_parking) return false;
-    if (f.hasElevator && !p.has_elevator) return false;
-    if (f.communityReportsOnly && !p.is_community_report) return false;
     return true;
   });
 }
@@ -94,12 +89,15 @@ export default function AccessibilityMap({ points }: Props) {
   const mapLoadedRef = useRef(false);
   const clusterMarkersRef = useRef(new Map<number, MarkerEntry>());
   const pointMarkersRef = useRef(new Map<number, MarkerEntry>());
+  const previewMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const pointIconHtmlRef = useRef<Record<string, string>>({});
 
   const [selected, setSelected] = useState<AccessibilityPoint | null>(null);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [reportLocation, setReportLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [reportCategory, setReportCategory] = useState<PointCategory>("community_report");
 
   const filtered = useMemo(() => applyFilters(points, filters), [points, filters]);
 
@@ -127,6 +125,7 @@ export default function AccessibilityMap({ points }: Props) {
         const Icon = cfg.IconComponent;
         pointIconHtml[cat] = renderToHtml(<Icon size={20} color={cfg.textColor} />);
       }
+      pointIconHtmlRef.current = pointIconHtml;
 
       map.addSource("points", {
         type: "geojson",
@@ -378,6 +377,10 @@ export default function AccessibilityMap({ points }: Props) {
     });
 
     return () => {
+      if (previewMarkerRef.current) {
+        previewMarkerRef.current.remove();
+        previewMarkerRef.current = null;
+      }
       mapLoadedRef.current = false;
       removeAll(clusterMarkersRef.current, pointMarkersRef.current);
       map.remove();
@@ -393,6 +396,49 @@ export default function AccessibilityMap({ points }: Props) {
       buildGeoJSON(filtered)
     );
   }, [filtered]);
+
+  // ── Preview marker for in-progress report ──────────────────────────────────
+  useEffect(() => {
+    if (previewMarkerRef.current) {
+      previewMarkerRef.current.remove();
+      previewMarkerRef.current = null;
+    }
+    if (!reportLocation || !mapRef.current || !mapLoadedRef.current) return;
+
+    const cfg = CATEGORY_CONFIG[reportCategory];
+    const iconHtml = pointIconHtmlRef.current[reportCategory] ?? "";
+
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "position:relative;width:52px;height:52px;pointer-events:none;";
+
+    const ring = document.createElement("div");
+    ring.style.cssText = [
+      `position:absolute;inset:0;border-radius:50%;`,
+      `background:${cfg.color};`,
+      `animation:preview-ping 1.4s cubic-bezier(0,0,0.2,1) infinite;`,
+    ].join("");
+
+    const circle = document.createElement("div");
+    circle.style.cssText = [
+      `position:absolute;top:6px;left:6px;width:40px;height:40px;`,
+      `border-radius:50%;`,
+      `background:${cfg.color};`,
+      `border:3px solid #fff;`,
+      `box-shadow:0 4px 20px rgba(0,0,0,0.38),0 0 0 2px ${cfg.color}50;`,
+      `display:flex;align-items:center;justify-content:center;`,
+    ].join("");
+
+    const iconEl = document.createElement("span");
+    iconEl.innerHTML = iconHtml;
+    iconEl.style.cssText = "display:flex;align-items:center;justify-content:center;pointer-events:none;";
+    circle.appendChild(iconEl);
+    wrapper.appendChild(ring);
+    wrapper.appendChild(circle);
+
+    previewMarkerRef.current = new maplibregl.Marker({ element: wrapper, anchor: "center" })
+      .setLngLat([reportLocation.lng, reportLocation.lat])
+      .addTo(mapRef.current);
+  }, [reportLocation, reportCategory]);
 
   const handleCurrentLocationReport = () => {
     if (!navigator.geolocation) {
@@ -417,13 +463,7 @@ export default function AccessibilityMap({ points }: Props) {
 
   const hasActiveFilters =
     filters.categories.length > 0 ||
-    filters.minScore > 0 ||
-    filters.verifiedOnly ||
-    filters.hasRamp ||
-    filters.hasToilet ||
-    filters.hasParking ||
-    filters.hasElevator ||
-    filters.communityReportsOnly;
+    filters.minScore > 0;
 
   return (
     <div className="relative w-full h-full">
@@ -496,9 +536,14 @@ export default function AccessibilityMap({ points }: Props) {
           <ReportForm
             lat={reportLocation.lat}
             lng={reportLocation.lng}
-            onClose={() => setReportLocation(null)}
+            onClose={() => {
+              setReportLocation(null);
+              setReportCategory("community_report");
+            }}
+            onCategoryChange={setReportCategory}
             onSubmitSuccess={() => {
               setReportLocation(null);
+              setReportCategory("community_report");
               window.location.reload();
             }}
           />

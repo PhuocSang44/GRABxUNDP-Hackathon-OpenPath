@@ -19,9 +19,6 @@ const PHOTO_CATEGORIES = [
   "blocked_sidewalk",
   "construction",
   "broken_curb_ramp",
-  "flooded",
-  "parked_motorcycles",
-  "newly_accessible",
 ];
 
 export function getPointPhotos(point: AccessibilityPoint): PhotoItem[] {

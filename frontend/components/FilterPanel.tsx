@@ -12,34 +12,6 @@ interface Props {
   filtered: number;
 }
 
-function Toggle({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 cursor-pointer select-none">
-      <div
-        onClick={() => onChange(!checked)}
-        className={`relative w-9 h-5 rounded-full transition-colors ${
-          checked ? "bg-blue-500" : "bg-gray-200"
-        }`}
-      >
-        <div
-          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-            checked ? "translate-x-4" : ""
-          }`}
-        />
-      </div>
-      <span className="text-sm text-gray-700">{label}</span>
-    </label>
-  );
-}
-
 const ALL_CATEGORIES = Object.keys(CATEGORY_CONFIG) as PointCategory[];
 
 export default function FilterPanel({ filters, onChange, visible, onClose, total, filtered }: Props) {
@@ -153,42 +125,6 @@ export default function FilterPanel({ filters, onChange, visible, onClose, total
           </div>
         </div>
 
-        {/* Toggles */}
-        <div className="px-4 py-3 space-y-3">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">
-            Features
-          </span>
-          <Toggle
-            label="Verified only"
-            checked={filters.verifiedOnly}
-            onChange={(v) => onChange({ ...filters, verifiedOnly: v })}
-          />
-          <Toggle
-            label="Ramp available"
-            checked={filters.hasRamp}
-            onChange={(v) => onChange({ ...filters, hasRamp: v })}
-          />
-          <Toggle
-            label="Accessible toilet"
-            checked={filters.hasToilet}
-            onChange={(v) => onChange({ ...filters, hasToilet: v })}
-          />
-          <Toggle
-            label="Parking available"
-            checked={filters.hasParking}
-            onChange={(v) => onChange({ ...filters, hasParking: v })}
-          />
-          <Toggle
-            label="Elevator access"
-            checked={filters.hasElevator}
-            onChange={(v) => onChange({ ...filters, hasElevator: v })}
-          />
-          <Toggle
-            label="Community reports only"
-            checked={filters.communityReportsOnly}
-            onChange={(v) => onChange({ ...filters, communityReportsOnly: v })}
-          />
-        </div>
       </div>
 
       {/* Footer */}
