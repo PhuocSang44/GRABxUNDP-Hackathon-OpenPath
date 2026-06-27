@@ -1,38 +1,38 @@
 # Backend
 
-Đây là backend Python cho dự án, được tổ chức theo cấu trúc `app/` để tách rõ API, service, repository, model, schema, database và cấu hình lõi.
+This is the Python backend for the project, organized under an `app/` structure that cleanly separates the API, services, repositories, models, schemas, database, and core configuration.
 
-## Cài đặt
+## Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Cấu trúc thư mục
+## Directory Structure
 
-- `app/api/`: khai báo router và các endpoint FastAPI.
-- `app/services/`: chứa logic nghiệp vụ.
-- `app/repositories/`: làm việc với dữ liệu và truy vấn.
-- `app/models/`: định nghĩa model SQLAlchemy.
-- `app/schemas/`: định nghĩa schema Pydantic cho request/response.
-- `app/db/database.py`: cấu hình kết nối cơ sở dữ liệu.
-- `app/core/`: cấu hình ứng dụng, settings, hằng số và tiện ích lõi.
-- `app/main.py`: điểm khởi động ứng dụng FastAPI.
+- `app/api/`: router declarations and FastAPI endpoints.
+- `app/services/`: business logic.
+- `app/repositories/`: data access and queries.
+- `app/models/`: SQLAlchemy model definitions.
+- `app/schemas/`: Pydantic schemas for requests and responses.
+- `app/db/database.py`: database connection configuration.
+- `app/core/`: application config, settings, constants, and core utilities.
+- `app/main.py`: FastAPI application entry point.
 
-## Tác dụng của các package
+## Package Overview
 
-- `fastapi`: framework web hiện đại để xây API nhanh, có type hints và tự sinh tài liệu OpenAPI.
-- `uvicorn`: ASGI server để chạy ứng dụng FastAPI trong môi trường phát triển và production.
-- `sqlalchemy`: ORM và bộ công cụ truy vấn cơ sở dữ liệu.
-- `psycopg2-binary`: driver PostgreSQL để SQLAlchemy kết nối với PostgreSQL.
-- `python-dotenv`: đọc biến môi trường từ file `.env`.
-- `pydantic-settings`: quản lý cấu hình ứng dụng bằng Pydantic Settings, tiện cho `Settings`/`BaseSettings`.
-- `alembic`: công cụ migration cho schema cơ sở dữ liệu.
-- `supabase`: SDK để tích hợp với Supabase khi cần auth, storage, database hoặc API của Supabase.
+- `fastapi`: modern web framework for building APIs quickly, with type hints and auto-generated OpenAPI documentation.
+- `uvicorn`: ASGI server for running the FastAPI application in development and production.
+- `sqlalchemy`: ORM and database query toolkit.
+- `psycopg2-binary`: PostgreSQL driver used by SQLAlchemy to connect to PostgreSQL.
+- `python-dotenv`: reads environment variables from a `.env` file.
+- `pydantic-settings`: application configuration management via Pydantic Settings (`Settings`/`BaseSettings`).
+- `alembic`: database schema migration tool.
+- `supabase`: SDK for integrating with Supabase for auth, storage, database, or Supabase APIs.
 
-## Chạy ứng dụng
+## Running the Application
 
-Khi đã có `app/main.py`, có thể chạy backend bằng lệnh:
+Once `app/main.py` is in place, start the backend with:
 
 ```bash
 uvicorn app.main:app --reload

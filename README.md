@@ -1,24 +1,24 @@
 # GRAB Hackathon
 
-Dự án này là workspace cho bài toán GRAB Hackathon.
+This project is a workspace for the GRAB Hackathon problem.
 
-## Mục tiêu
+## Goals
 
-- Phát triển và thử nghiệm các tính năng của dự án.
-- Tổ chức mã nguồn, cấu hình và tài nguyên liên quan.
+- Develop and test project features.
+- Organize source code, configuration, and related resources.
 
-## Bắt đầu
+## Getting Started
 
-1. Cài đặt các phụ thuộc cần thiết theo stack của dự án.
-2. Cập nhật file cấu hình môi trường nếu có.
-3. Chạy ứng dụng hoặc bài test theo hướng dẫn của dự án.
+1. Install the required dependencies for the project stack.
+2. Update the environment configuration file if applicable.
+3. Run the application or tests following the project instructions.
 
-## Cấu trúc
+## Structure
 
-- Mã nguồn chính nằm trực tiếp trong workspace này.
-- `README.md`: tài liệu tổng quan.
-- `.gitignore`: danh sách tệp và thư mục không theo dõi.
+- Main source code lives directly in this workspace.
+- `README.md`: overview documentation.
+- `.gitignore`: list of files and directories excluded from version control.
 
-## Ghi chú
+## Notes
 
-Nếu bạn cho tôi biết dự án dùng Node.js, Python, Java hay .NET, tôi có thể viết lại README và `.gitignore` sát thực tế hơn.
+If you let me know whether the project uses Node.js, Python, Java, or .NET, I can rewrite the README and `.gitignore` to be more accurate.
