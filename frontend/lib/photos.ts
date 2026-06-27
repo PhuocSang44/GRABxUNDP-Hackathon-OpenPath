@@ -1,4 +1,5 @@
 import { PhotoItem, AccessibilityPoint } from "./types";
+import { API_BASE_URL } from "./config";
 
 const PHOTO_CAPTIONS = [
   "Blocked sidewalk reported by community member",
@@ -25,7 +26,7 @@ export function getPointPhotos(point: AccessibilityPoint): PhotoItem[] {
   if (point.photo_url) {
     const fullUrl = point.photo_url.startsWith("http")
       ? point.photo_url
-      : `http://localhost:8000${point.photo_url}`;
+      : `${API_BASE_URL}${point.photo_url}`;
     return [{
       id: `${point.id}-uploaded`,
       url: fullUrl,

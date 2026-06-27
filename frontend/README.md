@@ -11,7 +11,9 @@ npm run build   # production build
 npm run lint    # ESLint check
 ```
 
-The backend must be running at `http://localhost:8000` (configured via CORS in `app/main.py`).
+Create `frontend/.env.local` with `NEXT_PUBLIC_API_URL=http://localhost:8000` so the frontend can reach the backend API.
+
+The backend must allow requests from the frontend origin via CORS in `app/main.py`.
 
 ## Map features
 

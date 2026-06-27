@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { PointCategory } from "@/lib/types";
 import { CATEGORY_CONFIG } from "@/lib/markers";
+import { API_BASE_URL } from "@/lib/config";
 
 const ISSUE_CATEGORIES: PointCategory[] = [
   "community_report",
@@ -71,7 +72,7 @@ export default function ReportForm({ lat, lng, onClose, onSubmitSuccess, onCateg
     if (file) formData.append("photo", file);
 
     try {
-      const res = await fetch("http://localhost:8000/api/reports", {
+      const res = await fetch(`${API_BASE_URL}/api/reports`, {
         method: "POST",
         body: formData,
       });
