@@ -7,7 +7,7 @@ export default function Legend() {
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="absolute bottom-10 left-4 z-10">
+    <div className="absolute bottom-10 left-4 z-10 hidden md:block">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <button
           onClick={() => setOpen((o) => !o)}

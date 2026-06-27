@@ -27,10 +27,21 @@ export default function PointPopup({ point, onClose }: Props) {
     : null;
 
   return (
-    <div className="absolute top-4 right-4 z-10 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-6rem)] flex flex-col">
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className="md:hidden fixed inset-0 bg-black/20 z-[5]"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="absolute bottom-0 left-0 right-0 md:top-4 md:right-4 md:bottom-auto md:left-auto md:w-80 bg-white md:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden max-h-[85vh] md:max-h-[calc(100vh-6rem)] flex flex-col z-10">
+      {/* Mobile drag handle */}
+      <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+        <div className="w-10 h-1 rounded-full bg-gray-300" />
+      </div>
       {/* Header */}
       <div
-        className="px-4 pt-4 pb-3 shrink-0"
+        className="px-4 pt-3 md:pt-4 pb-3 shrink-0"
         style={{ borderBottom: `3px solid ${cfg.color}` }}
       >
         <div className="flex items-start justify-between gap-2">
@@ -52,7 +63,7 @@ export default function PointPopup({ point, onClose }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none shrink-0"
+            className="text-gray-400 hover:text-gray-600 text-xl leading-none shrink-0 p-2 -m-2"
           >
             ×
           </button>
@@ -189,18 +200,19 @@ export default function PointPopup({ point, onClose }: Props) {
           href={`https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 py-2 rounded-lg text-xs font-semibold text-white text-center transition-opacity hover:opacity-90"
+          className="flex-1 py-3 md:py-2 rounded-lg text-xs font-semibold text-white text-center transition-opacity hover:opacity-90"
           style={{ backgroundColor: cfg.color }}
         >
           Navigate
         </a>
         <button
           onClick={onClose}
-          className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+          className="flex-1 py-3 md:py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
         >
           Report Issue
         </button>
       </div>
     </div>
+    </>
   );
 }
