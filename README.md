@@ -1,24 +1,69 @@
-# GRAB Hackathon
+# OpenPath — Accessibility Map for Ho Chi Minh City
 
-This project is a workspace for the GRAB Hackathon problem.
+OpenPath is a GIS-powered accessibility map built for the GRAB x UNDP Hackathon. It surfaces wheelchair-accessible locations across District 1, HCMC — parking, ramps, hospitals, toilets, bus stops, and community-reported issues — so that people with mobility challenges can plan journeys with confidence.
 
-## Goals
+## What it does
 
-- Develop and test project features.
-- Organize source code, configuration, and related resources.
+- Displays an interactive map centred on HCMC, populated with categorised accessibility points
+- Clusters nearby points at low zoom; expands to individual markers as you zoom in
+- Each marker opens a detail panel: score, address, features (ramp, toilet, parking, elevator), and issues
+- A filter panel lets users narrow results by category, minimum accessibility score, and facility flags
+- Cluster markers show a photo thumbnail sampled from their contained points
 
-## Getting Started
+## Architecture
 
-1. Install the required dependencies for the project stack.
-2. Update the environment configuration file if applicable.
-3. Run the application or tests following the project instructions.
+```
+frontend/   Next.js 15 app (MapLibre GL JS map, React components)
+backend/    FastAPI + SQLAlchemy + PostGIS (Python)
+```
 
-## Structure
+The backend exposes a REST API consumed by the frontend. The database is PostgreSQL with the PostGIS extension.
 
-- Main source code lives directly in this workspace.
-- `README.md`: overview documentation.
-- `.gitignore`: list of files and directories excluded from version control.
+## Running locally
 
-## Notes
+### Prerequisites
 
-If you let me know whether the project uses Node.js, Python, Java, or .NET, I can rewrite the README and `.gitignore` to be more accurate.
+- Python 3.11+
+- Node.js 20+
+- PostgreSQL with PostGIS (`docker run -e POSTGRES_PASSWORD=pass -p 5432:5432 postgis/postgis`)
+
+### Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env          # set DATABASE_URL
+alembic upgrade head           # creates road_segments + accessibility_points tables
+python scripts/seed.py         # populates ~20 road segments and POIs
+uvicorn app.main:app --reload  # runs on http://localhost:8000
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev                    # runs on http://localhost:3000
+```
+
+## API endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Health check — returns `{"message": "Backend is running"}` |
+| GET | `/api/segments` | All road segments with accessibility metadata |
+| GET | `/api/points` | All accessibility POIs with category, score, and facility flags |
+
+## Accessibility score bands
+
+| Score | Label | Colour |
+|-------|-------|--------|
+| 90–100 | Excellent | Green |
+| 70–89 | Good | Light green |
+| 50–69 | Moderate | Yellow |
+| 30–49 | Limited | Orange |
+| 0–29 | Poor | Red |
+
+## Point categories
+
+`accessible_parking` · `hospital` · `accessible_toilet` · `wheelchair_ramp` · `accessible_entrance` · `bus_stop` · `community_report` · `accessibility_issue`

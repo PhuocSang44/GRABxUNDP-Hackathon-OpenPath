@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenPath Frontend
 
-## Getting Started
+Next.js 15 app that renders the HCMC accessibility map.
 
-First, run the development server:
+## Running
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
+npm run build   # production build
+npm run lint    # ESLint check
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The backend must be running at `http://localhost:8000` (configured via CORS in `app/main.py`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Map features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Clustered POI map** — accessibility points from `GET /api/points` are rendered as category-coloured circle markers using MapLibre GL JS. At low zoom levels nearby points cluster into a single bubble showing the count; clicking a cluster either zooms in or opens a gallery of photos from its members.
 
-## Learn More
+**Point categories**
 
-To learn more about Next.js, take a look at the following resources:
+| Category | Colour |
+|----------|--------|
+| Accessible Parking | Blue |
+| Hospital | Red |
+| Accessible Toilet | Cyan |
+| Wheelchair Ramp | Green |
+| Accessible Entrance | Purple |
+| Bus Stop | Orange |
+| Community Report | Yellow |
+| Accessibility Issue | Dark red |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Point detail popup** — clicking any individual marker opens a panel with: name, address, accessibility score (with colour band label), facility flags (ramp, toilet, parking, elevator), features list, issues list, verification status, and last updated date.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Filter panel** — a slide-in panel (top-left "Filters" button) lets users narrow visible points by:
+- Category checkboxes
+- Minimum accessibility score (0–100 slider)
+- Reset all to defaults
 
-## Deploy on Vercel
+The location counter `N / Total locations` updates live as filters change.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Score bands**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Score | Label |
+|-------|-------|
+| 90–100 | Excellent |
+| 70–89 | Good |
+| 50–69 | Moderate |
+| 30–49 | Limited |
+| 0–29 | Poor |
+
+## Key files
+
+- `components/AccessibilityMap.tsx` — map init, clustering, marker sync, filter wiring
+- `components/FilterPanel.tsx` — slide-in filter UI
+- `components/PointPopup.tsx` — detail panel for a selected point
+- `components/map/ClusterGallery.tsx` — photo gallery for cluster members
+- `lib/types.ts` — `AccessibilityPoint`, `FilterState`, `PointCategory` types
+- `lib/markers.ts` — `CATEGORY_CONFIG` and score band helpers
+- `lib/photos.ts` — photo lookup by point id and category
+- `lib/api.ts` — `GET /api/points` fetch

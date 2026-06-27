@@ -33,16 +33,34 @@ next session can continue without guessing.
 └── session-handoff.md compact handoff (optional)
 ```
 
+## Routing Map
+
+- `ARCHITECTURE.md` — domain map, layer model, dependency rules
+- `docs/PRODUCT_SENSE.md` — primary user, job-to-be-done, no-go patterns
+- `docs/PLANS.md` — plan lifecycle and execution-plan policy
+- `docs/QUALITY_SCORE.md` — domain and layer health scores
+- `docs/RELIABILITY.md` — standard paths, golden journeys, restart expectations
+- `docs/SECURITY.md` — secrets, sandbox, external-action rules
+- `docs/FRONTEND.md` — UI constraints, map patterns, accessibility checks
+- `docs/design-docs/index.md` — accepted, proposed, and deprecated design decisions
+- `docs/product-specs/index.md` — current user-facing behavior specs
+- `docs/exec-plans/active/` — plans currently driving work
+- `docs/exec-plans/completed/` — finished plans (keep for agent context)
+- `docs/exec-plans/tech-debt-tracker.md` — acknowledged deferred work
+
 ## Startup Workflow
 
 Before writing any code:
 
 1. Confirm working directory with `pwd`.
-2. Read `progress.md` — latest verified state and next step.
-3. Read `feature_list.json` — pick the highest-priority `not_started` or `in_progress` feature.
-4. Review recent commits: `git log --oneline -5`.
-5. Run `./init.sh`.
-6. If baseline verification is already failing, fix that first. Do not stack new work on a broken base.
+2. Read `ARCHITECTURE.md` — understand the domain map and hard dependency rules.
+3. Read `docs/QUALITY_SCORE.md` — see which domains or layers are weakest.
+4. Read `progress.md` — latest verified state and next step.
+5. Read `feature_list.json` — pick the highest-priority `not_started` or `in_progress` feature.
+6. Read the relevant plan in `docs/exec-plans/active/` if one exists for the target feature.
+7. Review recent commits: `git log --oneline -5`.
+8. Run `./init.sh`.
+9. If baseline verification is already failing, fix that first. Do not stack new work on a broken base.
 
 ## Verification Commands
 
@@ -95,6 +113,10 @@ Before ending any session:
 
 1. Update `progress.md` with what was completed, what ran, and what is broken.
 2. Update `feature_list.json` status and evidence fields.
-3. Record any unresolved risk or blocker.
-4. Commit with a descriptive message once the work is in a safe state.
-5. Leave the repo clean enough for the next session to run `./init.sh` immediately.
+3. Update the active execution plan in `docs/exec-plans/active/`.
+4. Update `docs/QUALITY_SCORE.md` if any domain or layer meaningfully changed.
+5. Record any new debt in `docs/exec-plans/tech-debt-tracker.md` if you deferred it.
+6. Move finished plans to `docs/exec-plans/completed/` when appropriate.
+7. Record any unresolved risk or blocker.
+8. Commit with a descriptive message once the work is in a safe state.
+9. Leave the repo clean enough for the next session to run `./init.sh` immediately.
