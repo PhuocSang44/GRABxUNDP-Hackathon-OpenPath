@@ -128,6 +128,28 @@
         "AccessibilityMap handles clicks, renders ReportForm, uploads photo and refetches"
       ],
       "notes": "No auth required for MVP. Report types: blocked_sidewalk, construction, broken_curb_ramp, flooded, parked_motorcycles, newly_accessible."
+    },
+    {
+      "id": "feat-007",
+      "priority": 7,
+      "area": "feature",
+      "name": "Authentication & Mobile Bottom Navigation",
+      "description": "JWT-based authentication with user and admin roles. Frontend bottom navigation bar with Explore, Verify (admin only), and Profile tabs. Report submission requires authentication.",
+      "user_visible_behavior": "Users see a bottom nav bar. Profile tab allows login/register. Only logged-in users can submit reports. Admin users see an extra Verify tab.",
+      "dependencies": ["feat-003", "feat-006"],
+      "status": "passing",
+      "verification": [
+        "POST /api/auth/register creates user",
+        "POST /api/auth/login returns JWT",
+        "cd frontend && npm run build (exit 0)",
+        "Report submission requires JWT token"
+      ],
+      "evidence": [
+        "FastAPI auth endpoints created with pyjwt and passlib",
+        "Next.js AuthProvider and AppShell implemented",
+        "npm run build succeeded (2026-06-27)"
+      ],
+      "notes": "User registration is restricted to 'user' role. Admin accounts must be seeded or updated manually."
     }
   ]
 }

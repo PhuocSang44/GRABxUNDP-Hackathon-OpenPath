@@ -1,7 +1,7 @@
 "use client";
 
 import { AccessibilityPoint } from "@/lib/types";
-import { CATEGORY_CONFIG, getScoreColor, getScoreLabel, SCORE_BANDS } from "@/lib/markers";
+import { CATEGORY_CONFIG, getScoreColor, getScoreLabel } from "@/lib/markers";
 import { getPointPhotos } from "@/lib/photos";
 import PhotoCarousel from "./map/PhotoCarousel";
 

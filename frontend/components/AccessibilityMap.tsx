@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { LuAccessibility } from "react-icons/lu";
+import { useRouter } from "next/navigation";
 import maplibregl from "maplibre-gl";
 import * as GeoJSON from "geojson";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/lib/types";
 import { CATEGORY_CONFIG } from "@/lib/markers";
 import { getPointPhotos } from "@/lib/photos";
+import { useAuth } from "./AuthContext";
 import FilterPanel from "./FilterPanel";
 import PointPopup from "./PointPopup";
 import Legend from "./Legend";
@@ -92,6 +94,8 @@ export default function AccessibilityMap({ points }: Props) {
   const pointMarkersRef = useRef(new Map<number, MarkerEntry>());
   const previewMarkerRef = useRef<maplibregl.Marker | null>(null);
   const pointIconHtmlRef = useRef<Record<string, string>>({});
+  const router = useRouter();
+  const { user } = useAuth();
 
   const [selected, setSelected] = useState<AccessibilityPoint | null>(null);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -376,7 +380,11 @@ export default function AccessibilityMap({ points }: Props) {
       (map.getSource("points") as maplibregl.GeoJSONSource).setData(
         buildGeoJSON(applyFilters(points, DEFAULT_FILTERS))
       );
+
     });
+
+    const currentClusterMarkers = clusterMarkersRef.current;
+    const currentPointMarkers = pointMarkersRef.current;
 
     return () => {
       if (previewMarkerRef.current) {
@@ -384,7 +392,7 @@ export default function AccessibilityMap({ points }: Props) {
         previewMarkerRef.current = null;
       }
       mapLoadedRef.current = false;
-      removeAll(clusterMarkersRef.current, pointMarkersRef.current);
+      removeAll(currentClusterMarkers, currentPointMarkers);
       map.remove();
       mapRef.current = null;
     };
@@ -443,6 +451,10 @@ export default function AccessibilityMap({ points }: Props) {
   }, [reportLocation, reportCategory]);
 
   const handleCurrentLocationReport = () => {
+    if (!user) {
+      router.push("/profile");
+      return;
+    }
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
       return;
