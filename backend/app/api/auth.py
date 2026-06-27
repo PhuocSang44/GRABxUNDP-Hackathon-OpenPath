@@ -28,7 +28,7 @@ def get_db():
 
 def create_access_token(user: User) -> str:
     payload = {
-        "sub": user.id,
+        "sub": str(user.id),
         "role": user.role,
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRATION_DAYS),
     }
@@ -41,7 +41,7 @@ def get_current_user(
 ) -> User:
     """Dependency that requires a valid JWT and returns the User."""
     if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
+        raise HTTPException(status_code=401, detail="Invalid authorization header prefix")
 
     token = authorization.split(" ", 1)[1]
     try:
@@ -50,16 +50,21 @@ def get_current_user(
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 
-    user_id: int = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
+    sub_val = payload.get("sub")
+    if sub_val is None:
+        raise HTTPException(status_code=401, detail="Invalid token payload: no sub")
+    
+    try:
+        user_id = int(sub_val)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid token payload: sub is not an integer")
 
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=401, detail=f"User not found for id {user_id}")
 
     return user
 
@@ -80,8 +85,13 @@ def get_optional_user(
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
         return None
 
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    sub_val = payload.get("sub")
+    if sub_val is None:
+        return None
+        
+    try:
+        user_id = int(sub_val)
+    except ValueError:
         return None
 
     return db.query(User).filter(User.id == user_id).first()
