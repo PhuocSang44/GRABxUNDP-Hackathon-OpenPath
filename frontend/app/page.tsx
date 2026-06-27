@@ -13,7 +13,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="flex flex-col h-screen">
+    <main className="flex flex-col h-full overflow-hidden">
       <header className="shrink-0 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shadow-sm z-20">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500 text-white font-bold text-sm">
           A

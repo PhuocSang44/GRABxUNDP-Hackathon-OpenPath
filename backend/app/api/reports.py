@@ -5,7 +5,9 @@ from pydantic import BaseModel
 
 from app.db.database import SessionLocal
 from app.models.accessibility_point import AccessibilityPoint
+from app.models.user import User
 from app.core.supabase import supabase
+from app.api.auth import get_current_user
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -23,7 +25,8 @@ def create_report(
     category: str = Form(...),
     description: str = Form(None),
     photo: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     photo_url = None
     if photo:
