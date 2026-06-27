@@ -1,0 +1,129 @@
+{
+  "project": "AccessibleMap",
+  "last_updated": "2026-06-27",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "do_not_skip_verification": true
+  },
+  "status_legend": {
+    "not_started": "Work has not begun.",
+    "in_progress": "The feature is the current active task.",
+    "blocked": "Work cannot continue until a documented blocker is resolved.",
+    "passing": "Required verification has passed and evidence is recorded."
+  },
+  "features": [
+    {
+      "id": "feat-001",
+      "priority": 1,
+      "area": "core",
+      "name": "Project Foundation & Database Schema",
+      "description": "PostGIS-enabled PostgreSQL schema for road segments and accessibility metadata. Backend .env wired up, DB connection verified, FastAPI health endpoint live.",
+      "user_visible_behavior": "GET / returns {\"message\": \"Backend is running\"}. Alembic migration creates the road_segments table with PostGIS geometry column.",
+      "dependencies": [],
+      "status": "passing",
+      "verification": [
+        "cd backend && python -m py_compile app/main.py && echo 'syntax OK'",
+        "curl -sf http://localhost:8000/ | grep running",
+        "cd backend && alembic upgrade head (no error)",
+        "psql $DATABASE_URL -c '\\d road_segments' shows geometry column"
+      ],
+      "evidence": [
+        "alembic upgrade head ran clean (2026-06-27)",
+        "python -c 'from app.main import app; print(\"imports OK\")' → imports OK",
+        "GET /api/segments returns 200 with seeded rows"
+      ],
+      "notes": "Requires PostgreSQL with PostGIS extension. Use Docker: docker run -e POSTGRES_PASSWORD=pass -p 5432:5432 postgis/postgis"
+    },
+    {
+      "id": "feat-002",
+      "priority": 2,
+      "area": "core",
+      "name": "Accessibility Data Model & Seed Data",
+      "description": "SQLAlchemy model for RoadSegment with all accessibility fields (sidewalk, width_m, surface, curb_ramp, obstacles, accessibility_score, confidence). Seed script populates ~20 road segments in a chosen HCMC demo area with precomputed scores.",
+      "user_visible_behavior": "GET /api/segments returns a list of road segments with accessibility metadata. Each segment has a numeric accessibility_score (0–100).",
+      "dependencies": ["feat-001"],
+      "status": "passing",
+      "verification": [
+        "cd backend && python scripts/seed.py (runs without error)",
+        "curl -sf http://localhost:8000/api/segments | python -m json.tool | grep accessibility_score"
+      ],
+      "evidence": [
+        "python scripts/seed.py → 'Seeded 20 road segments' (2026-06-27)",
+        "20 District 1 HCMC segments with scores 20–92"
+      ],
+      "notes": "Seed data can use hardcoded GeoJSON coordinates for the demo area. AI scores precomputed offline."
+    },
+    {
+      "id": "feat-003",
+      "priority": 3,
+      "area": "core",
+      "name": "Accessibility Map UI",
+      "description": "Interactive map (MapLibre GL JS) centred on the HCMC demo area. Road segments rendered as coloured lines: green (score>=75), yellow (40–74), red (<40). Clicking a segment opens an info panel showing all accessibility fields.",
+      "user_visible_behavior": "User opens the app, sees a map with coloured road segments. Clicking a segment shows: Accessibility Score, sidewalk availability, estimated width, surface condition, curb ramp, obstacles, confidence, last updated.",
+      "dependencies": ["feat-002"],
+      "status": "passing",
+      "verification": [
+        "cd frontend && npm run build (exit 0, no TS errors)",
+        "cd frontend && npm run lint (exit 0)",
+        "Visual check: map loads at localhost:3000, coloured segments visible, info panel opens on click"
+      ],
+      "evidence": [
+        "npm run build → exit 0, no TypeScript errors (2026-06-27)",
+        "MapLibre GL JS installed, AccessibilityMap + InfoPanel components built"
+      ],
+      "notes": "Use MapLibre GL JS (open source). Fetch segments from GET /api/segments. Use GeoJSON source + line layer."
+    },
+    {
+      "id": "feat-004",
+      "priority": 4,
+      "area": "feature",
+      "name": "AI Accessibility Analysis Pipeline",
+      "description": "Backend service that fetches a Google Street View Static API image for a road segment coordinate, sends it to a vision LLM, parses the structured JSON response, and stores the result in the DB. Exposed as POST /api/segments/{id}/analyse.",
+      "user_visible_behavior": "Calling the analyse endpoint updates the segment's accessibility fields and score. For the MVP, this runs on demand for demo segments (not live during map interaction).",
+      "dependencies": ["feat-002"],
+      "status": "not_started",
+      "verification": [
+        "curl -sf -X POST http://localhost:8000/api/segments/1/analyse | python -m json.tool | grep confidence",
+        "DB row updated: SELECT accessibility_score, confidence FROM road_segments WHERE id=1"
+      ],
+      "evidence": [],
+      "notes": "Requires GOOGLE_STREET_VIEW_API_KEY and LLM API key in .env. For hackathon demo, precompute and load via seed script to avoid live API calls during the presentation."
+    },
+    {
+      "id": "feat-005",
+      "priority": 5,
+      "area": "feature",
+      "name": "Accessible Route Recommendation",
+      "description": "Route comparison UI: user selects start/end from predefined demo locations, backend returns two routes (fastest via OSRM, most accessible via weighted graph using segment scores). Frontend displays both routes on map with score and warnings.",
+      "user_visible_behavior": "User picks origin and destination. Map shows two overlaid routes: Fastest Route (score X, warnings list) and Recommended Accessible Route (score Y, benefits list). Accessible route highlighted.",
+      "dependencies": ["feat-003"],
+      "status": "not_started",
+      "verification": [
+        "GET /api/routes?from=10.7769,106.7009&to=10.7800,106.7050 returns two routes with accessibility_score",
+        "Frontend renders both routes on map with correct colours",
+        "cd frontend && npm run build (exit 0)"
+      ],
+      "evidence": [],
+      "notes": "MVP supports routes up to 2 km between 2–3 predefined demo location pairs. OSRM can be run via Docker: docker run -p 5000:5000 osrm/osrm-backend"
+    },
+    {
+      "id": "feat-006",
+      "priority": 6,
+      "area": "feature",
+      "name": "Community Reporting",
+      "description": "Users can submit accessibility reports (blocked sidewalk, construction, broken curb ramp, etc.) for a map location. Reports stored in DB and displayed as pins on the map.",
+      "user_visible_behavior": "User clicks on the map, a report form appears (type selector + optional description), submits. Report appears as a pin on the map. Other users can see existing reports.",
+      "dependencies": ["feat-003"],
+      "status": "not_started",
+      "verification": [
+        "POST /api/reports with body {lat, lng, type, description} returns 201",
+        "GET /api/reports returns the submitted report",
+        "Report pin visible on map at the submitted coordinates",
+        "cd frontend && npm run build (exit 0)"
+      ],
+      "evidence": [],
+      "notes": "No auth required for MVP. Report types: blocked_sidewalk, construction, broken_curb_ramp, flooded, parked_motorcycles, newly_accessible."
+    }
+  ]
+}
