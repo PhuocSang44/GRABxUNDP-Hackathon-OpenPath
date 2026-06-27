@@ -1,3 +1,16 @@
+export interface PhotoItem {
+  id: string;
+  url: string;
+  thumbUrl: string;
+  caption: string | null;
+  created_at: string;
+}
+
+export interface GalleryItem {
+  point: AccessibilityPoint;
+  photo: PhotoItem;
+}
+
 export type PointCategory =
   | "accessible_parking"
   | "hospital"

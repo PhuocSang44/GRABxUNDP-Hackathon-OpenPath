@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import maplibregl from "maplibre-gl";
-import { AccessibilityPoint, DEFAULT_FILTERS, FilterState } from "@/lib/types";
+import {
+  AccessibilityPoint,
+  DEFAULT_FILTERS,
+  FilterState,
+  GalleryItem,
+} from "@/lib/types";
 import { CATEGORY_CONFIG, getScoreColor, makeSvgMarker } from "@/lib/markers";
+import { getPointPhotos } from "@/lib/photos";
 import FilterPanel from "./FilterPanel";
 import PointPopup from "./PointPopup";
 import Legend from "./Legend";
+import ClusterMarker from "./map/ClusterMarker";
+import ClusterGallery from "./map/ClusterGallery";
 
 interface Props {
   points: AccessibilityPoint[];
@@ -14,6 +23,12 @@ interface Props {
 
 const HCMC_CENTER: [number, number] = [106.7031, 10.7731];
 const CATEGORIES = Object.keys(CATEGORY_CONFIG) as (keyof typeof CATEGORY_CONFIG)[];
+
+interface ClusterEntry {
+  marker: maplibregl.Marker;
+  root: Root;
+  count: number;
+}
 
 function applyFilters(points: AccessibilityPoint[], f: FilterState): AccessibilityPoint[] {
   return points.filter((p) => {
@@ -32,20 +47,24 @@ function applyFilters(points: AccessibilityPoint[], f: FilterState): Accessibili
 function buildGeoJSON(points: AccessibilityPoint[]): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
-    features: points.map((p) => ({
-      type: "Feature",
-      id: p.id,
-      geometry: { type: "Point", coordinates: [p.lng, p.lat] },
-      properties: {
+    features: points.map((p) => {
+      const photos = getPointPhotos(p.id, p.category);
+      return {
+        type: "Feature",
         id: p.id,
-        category: p.category,
-        categoryColor: CATEGORY_CONFIG[p.category].color,
-        scoreColor: getScoreColor(p.accessibility_score),
-        score: p.accessibility_score,
-        verified: p.verified,
-        data: JSON.stringify(p),
-      },
-    })),
+        geometry: { type: "Point", coordinates: [p.lng, p.lat] },
+        properties: {
+          id: p.id,
+          category: p.category,
+          categoryColor: CATEGORY_CONFIG[p.category].color,
+          scoreColor: getScoreColor(p.accessibility_score),
+          score: p.accessibility_score,
+          verified: p.verified,
+          firstPhoto: photos[0]?.thumbUrl ?? null,
+          data: JSON.stringify(p),
+        },
+      };
+    }),
   };
 }
 
@@ -53,13 +72,16 @@ export default function AccessibilityMap({ points }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const mapLoadedRef = useRef(false);
+  const clusterMarkersRef = useRef(new Map<number, ClusterEntry>());
+
   const [selected, setSelected] = useState<AccessibilityPoint | null>(null);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [filtersVisible, setFiltersVisible] = useState(false);
 
   const filtered = useMemo(() => applyFilters(points, filters), [points, filters]);
 
-  // Init map once
+  // ── Init map ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -74,7 +96,7 @@ export default function AccessibilityMap({ points }: Props) {
     map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
 
     map.on("load", async () => {
-      // Pre-load one icon per category
+      // Pre-load category icons for individual point symbols
       await Promise.all(
         CATEGORIES.map(
           (cat) =>
@@ -84,6 +106,7 @@ export default function AccessibilityMap({ points }: Props) {
                 if (!map.hasImage(`marker-${cat}`)) map.addImage(`marker-${cat}`, img);
                 resolve();
               };
+              img.onerror = () => resolve();
               img.src = makeSvgMarker(cat, 75);
             })
         )
@@ -97,43 +120,7 @@ export default function AccessibilityMap({ points }: Props) {
         clusterRadius: 50,
       });
 
-      // ── Cluster circle ──────────────────────────────────────────────────────
-      map.addLayer({
-        id: "clusters",
-        type: "circle",
-        source: "points",
-        filter: ["has", "point_count"],
-        paint: {
-          "circle-color": [
-            "step", ["get", "point_count"],
-            "#60a5fa", 5,
-            "#3b82f6", 15,
-            "#1d4ed8",
-          ],
-          "circle-radius": [
-            "step", ["get", "point_count"],
-            22, 5, 30, 15, 38,
-          ],
-          "circle-opacity": 0.9,
-          "circle-stroke-width": 3,
-          "circle-stroke-color": "#fff",
-        },
-      });
-
-      // ── Cluster count ───────────────────────────────────────────────────────
-      map.addLayer({
-        id: "cluster-count",
-        type: "symbol",
-        source: "points",
-        filter: ["has", "point_count"],
-        layout: {
-          "text-field": "{point_count_abbreviated}",
-          "text-size": 13,
-        },
-        paint: { "text-color": "#fff" },
-      });
-
-      // ── Individual point: score ring ────────────────────────────────────────
+      // ── Individual point layers (unclustered) ──────────────────────────────
       map.addLayer({
         id: "unclustered-ring",
         type: "circle",
@@ -142,11 +129,9 @@ export default function AccessibilityMap({ points }: Props) {
         paint: {
           "circle-color": ["get", "scoreColor"],
           "circle-radius": 14,
-          "circle-opacity": 1,
         },
       });
 
-      // ── Individual point: category fill ────────────────────────────────────
       map.addLayer({
         id: "unclustered-point",
         type: "circle",
@@ -160,7 +145,6 @@ export default function AccessibilityMap({ points }: Props) {
         },
       });
 
-      // ── Hover highlight ─────────────────────────────────────────────────────
       map.addLayer({
         id: "unclustered-hover",
         type: "circle",
@@ -175,28 +159,16 @@ export default function AccessibilityMap({ points }: Props) {
         },
       });
 
-      // ── Cluster click: zoom in ──────────────────────────────────────────────
-      map.on("click", "clusters", (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-        const clusterId = features[0].properties?.cluster_id;
-        const src = map.getSource("points") as maplibregl.GeoJSONSource;
-        src.getClusterExpansionZoom(clusterId).then((zoom) => {
-          const coords = (features[0].geometry as GeoJSON.Point).coordinates as [number, number];
-          map.easeTo({ center: coords, zoom: zoom + 1 });
-        });
-      });
-
-      // ── Point click: open popup ─────────────────────────────────────────────
+      // ── Point click ────────────────────────────────────────────────────────
       map.on("click", "unclustered-point", (e) => {
         const feature = e.features?.[0];
         if (!feature?.properties?.data) return;
         const point: AccessibilityPoint = JSON.parse(feature.properties.data);
+        setGalleryItems([]);
         setSelected(point);
       });
 
-      // ── Cursor styles ───────────────────────────────────────────────────────
-      map.on("mouseenter", "clusters", () => { map.getCanvas().style.cursor = "pointer"; });
-      map.on("mouseleave", "clusters", () => { map.getCanvas().style.cursor = ""; });
+      // ── Hover ──────────────────────────────────────────────────────────────
       map.on("mouseenter", "unclustered-point", (e) => {
         map.getCanvas().style.cursor = "pointer";
         const id = e.features?.[0]?.id;
@@ -207,10 +179,84 @@ export default function AccessibilityMap({ points }: Props) {
         map.setFilter("unclustered-hover", ["==", ["id"], -1]);
       });
 
+      // ── Cluster DOM markers via render event ───────────────────────────────
+      const syncClusterMarkers = () => {
+        if (!map.isSourceLoaded("points")) return;
+
+        const features = map.querySourceFeatures("points", {
+          filter: ["has", "point_count"],
+        });
+
+        const seenIds = new Set<number>();
+
+        for (const feature of features) {
+          const props = feature.properties!;
+          const clusterId = props.cluster_id as number;
+          const count = props.point_count as number;
+          const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+
+          seenIds.add(clusterId);
+
+          const existing = clusterMarkersRef.current.get(clusterId);
+
+          if (!existing) {
+            const container = document.createElement("div");
+            const root = createRoot(container);
+            const source = map.getSource("points") as maplibregl.GeoJSONSource;
+
+            const handleClusterClick = async () => {
+              // Zoom into cluster
+              try {
+                const zoom = await source.getClusterExpansionZoom(clusterId);
+                map.easeTo({ center: coords, zoom, duration: 500 });
+              } catch {}
+
+              // Build gallery from leaves that have photos
+              try {
+                const leaves = await source.getClusterLeaves(clusterId, 100, 0);
+                const items: GalleryItem[] = leaves.flatMap((leaf) => {
+                  if (!leaf.properties?.data) return [];
+                  const point: AccessibilityPoint = JSON.parse(leaf.properties.data);
+                  const photos = getPointPhotos(point.id, point.category);
+                  return photos.length > 0 ? [{ point, photo: photos[0] }] : [];
+                });
+                setSelected(null);
+                if (items.length > 0) setGalleryItems(items);
+              } catch {}
+            };
+
+            root.render(
+              <ClusterMarker
+                count={count}
+                getLeaves={(limit) => source.getClusterLeaves(clusterId, limit, 0)}
+                onClick={handleClusterClick}
+              />
+            );
+
+            const marker = new maplibregl.Marker({ element: container, anchor: "center" })
+              .setLngLat(coords)
+              .addTo(map);
+
+            clusterMarkersRef.current.set(clusterId, { marker, root, count });
+          }
+        }
+
+        // Remove stale cluster markers
+        for (const [id, entry] of clusterMarkersRef.current) {
+          if (!seenIds.has(id)) {
+            entry.root.unmount();
+            entry.marker.remove();
+            clusterMarkersRef.current.delete(id);
+          }
+        }
+      };
+
+      map.on("render", syncClusterMarkers);
+
       mapLoadedRef.current = true;
       mapRef.current = map;
 
-      // Apply initial data
+      // Apply initial filtered data
       (map.getSource("points") as maplibregl.GeoJSONSource).setData(
         buildGeoJSON(applyFilters(points, DEFAULT_FILTERS))
       );
@@ -218,30 +264,49 @@ export default function AccessibilityMap({ points }: Props) {
 
     return () => {
       mapLoadedRef.current = false;
+      for (const { marker, root } of clusterMarkersRef.current.values()) {
+        root.unmount();
+        marker.remove();
+      }
+      clusterMarkersRef.current.clear();
       map.remove();
       mapRef.current = null;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update source when filters change
+  // ── Update source when filters change ──────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !mapLoadedRef.current) return;
+    // Clear existing cluster markers — they'll be recreated by syncClusterMarkers
+    for (const { marker, root } of clusterMarkersRef.current.values()) {
+      root.unmount();
+      marker.remove();
+    }
+    clusterMarkersRef.current.clear();
     (mapRef.current.getSource("points") as maplibregl.GeoJSONSource).setData(
       buildGeoJSON(filtered)
     );
   }, [filtered]);
 
+  const hasActiveFilters =
+    filters.categories.length > 0 ||
+    filters.minScore > 0 ||
+    filters.verifiedOnly ||
+    filters.hasRamp ||
+    filters.hasToilet ||
+    filters.hasParking ||
+    filters.hasElevator ||
+    filters.communityReportsOnly;
+
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Filter toggle button */}
+      {/* Filter toggle */}
       <button
         onClick={() => setFiltersVisible((v) => !v)}
         className={`absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl shadow-md text-sm font-medium transition-colors ${
-          filtersVisible
-            ? "bg-blue-500 text-white"
-            : "bg-white text-gray-700 hover:bg-gray-50"
+          filtersVisible ? "bg-blue-500 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
         }`}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,16 +314,13 @@ export default function AccessibilityMap({ points }: Props) {
             d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
         </svg>
         Filters
-        {(filters.categories.length > 0 || filters.minScore > 0 || filters.verifiedOnly ||
-          filters.hasRamp || filters.hasToilet || filters.hasParking || filters.hasElevator ||
-          filters.communityReportsOnly) && (
+        {hasActiveFilters && (
           <span className="bg-white text-blue-500 rounded-full w-4 h-4 text-xs flex items-center justify-center font-bold">
             •
           </span>
         )}
       </button>
 
-      {/* Filter count badge */}
       {!filtersVisible && (
         <div className="absolute top-4 left-28 z-10 bg-white rounded-xl shadow-md px-3 py-2 text-xs text-gray-500">
           {filtered.length} / {points.length} locations
@@ -275,6 +337,19 @@ export default function AccessibilityMap({ points }: Props) {
       />
 
       <PointPopup point={selected} onClose={() => setSelected(null)} />
+
+      <ClusterGallery
+        items={galleryItems}
+        onSelectPoint={(point) => {
+          setGalleryItems([]);
+          setSelected(point);
+          if (mapRef.current) {
+            mapRef.current.easeTo({ center: [point.lng, point.lat], zoom: 16, duration: 600 });
+          }
+        }}
+        onClose={() => setGalleryItems([])}
+      />
+
       <Legend />
     </div>
   );

@@ -2,6 +2,8 @@
 
 import { AccessibilityPoint } from "@/lib/types";
 import { CATEGORY_CONFIG, getScoreColor, getScoreLabel, SCORE_BANDS } from "@/lib/markers";
+import { getPointPhotos } from "@/lib/photos";
+import PhotoCarousel from "./map/PhotoCarousel";
 
 interface Props {
   point: AccessibilityPoint | null;
@@ -14,6 +16,7 @@ export default function PointPopup({ point, onClose }: Props) {
   const cfg = CATEGORY_CONFIG[point.category];
   const scoreColor = getScoreColor(point.accessibility_score);
   const scoreLabel = getScoreLabel(point.accessibility_score);
+  const photos = getPointPhotos(point.id, point.category);
 
   const lastUpdated = point.last_updated
     ? new Date(point.last_updated).toLocaleDateString("en-GB", {
@@ -95,6 +98,16 @@ export default function PointPopup({ point, onClose }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Photo carousel */}
+        {photos.length > 0 && (
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              Community Photos ({photos.length})
+            </div>
+            <PhotoCarousel photos={photos} />
+          </div>
+        )}
 
         {/* Description */}
         {point.description && (
