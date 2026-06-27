@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const { user, isLoading, login, register, logout } = useAuth();
   const [tab, setTab] = useState<AuthTab>("login");
   const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -23,9 +24,10 @@ export default function ProfilePage() {
       if (tab === "login") {
         await login(username, password);
       } else {
-        await register(username, password);
+        await register(username, name, password);
       }
       setUsername("");
+      setName("");
       setPassword("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -68,7 +70,7 @@ export default function ProfilePage() {
                     <User className="w-10 h-10 text-white" />
                   </div>
                   <h2 className="text-xl font-bold text-white">
-                    {user.username}
+                    {user.name || user.username}
                   </h2>
                   <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
                     <Shield className="w-3.5 h-3.5 text-white" />
@@ -78,6 +80,12 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="px-6 py-4 space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500">Full Name</span>
+                    <span className="font-medium text-gray-900">
+                      {user.name || "—"}
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Username</span>
                     <span className="font-medium text-gray-900">
@@ -149,6 +157,22 @@ export default function ProfilePage() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                {tab === "register" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      autoComplete="name"
+                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Username

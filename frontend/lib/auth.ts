@@ -1,6 +1,7 @@
 export interface User {
   id: number;
   username: string;
+  name?: string | null;
   role: "user" | "admin";
 }
 
@@ -52,12 +53,13 @@ export async function loginUser(
 
 export async function registerUser(
   username: string,
+  name: string,
   password: string
 ): Promise<{ access_token: string; user: User }> {
   const res = await fetch(`${BASE_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, name, password }),
   });
 
   if (!res.ok) {
