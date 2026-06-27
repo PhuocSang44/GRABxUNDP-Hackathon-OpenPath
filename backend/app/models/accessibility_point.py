@@ -22,4 +22,5 @@ class AccessibilityPoint(Base):
     has_parking = Column(Boolean, default=False)
     has_elevator = Column(Boolean, default=False)
     is_community_report = Column(Boolean, default=False)
+    photo_url = Column(String, nullable=True)
     last_updated = Column(DateTime(timezone=True), server_default=func.now())

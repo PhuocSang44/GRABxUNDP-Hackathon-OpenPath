@@ -115,14 +115,18 @@
       "description": "Users can submit accessibility reports (blocked sidewalk, construction, broken curb ramp, etc.) for a map location. Reports stored in DB and displayed as pins on the map.",
       "user_visible_behavior": "User clicks on the map, a report form appears (type selector + optional description), submits. Report appears as a pin on the map. Other users can see existing reports.",
       "dependencies": ["feat-003"],
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "POST /api/reports with body {lat, lng, type, description} returns 201",
         "GET /api/reports returns the submitted report",
         "Report pin visible on map at the submitted coordinates",
         "cd frontend && npm run build (exit 0)"
       ],
-      "evidence": [],
+      "evidence": [
+        "Backend migration added photo_url and API handles file upload via POST /api/reports",
+        "Frontend built successfully without TypeScript errors (2026-06-27)",
+        "AccessibilityMap handles clicks, renders ReportForm, uploads photo and refetches"
+      ],
       "notes": "No auth required for MVP. Report types: blocked_sidewalk, construction, broken_curb_ramp, flooded, parked_motorcycles, newly_accessible."
     }
   ]

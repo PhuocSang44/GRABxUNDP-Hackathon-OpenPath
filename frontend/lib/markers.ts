@@ -16,6 +16,12 @@ export const CATEGORY_CONFIG: Record<PointCategory, CategoryConfig> = {
   bus_stop:            { label: "Bus Stop",              color: "#f97316", textColor: "#fff", icon: "B" },
   community_report:    { label: "Community Report",     color: "#eab308", textColor: "#000", icon: "C" },
   accessibility_issue: { label: "Accessibility Issue",  color: "#dc2626", textColor: "#fff", icon: "!" },
+  blocked_sidewalk:    { label: "Blocked Sidewalk",     color: "#dc2626", textColor: "#fff", icon: "!" },
+  construction:        { label: "Construction",         color: "#f97316", textColor: "#fff", icon: "C" },
+  broken_curb_ramp:    { label: "Broken Curb Ramp",     color: "#ef4444", textColor: "#fff", icon: "!" },
+  flooded:             { label: "Flooded",              color: "#3b82f6", textColor: "#fff", icon: "W" },
+  parked_motorcycles:  { label: "Parked Motorcycles",   color: "#dc2626", textColor: "#fff", icon: "M" },
+  newly_accessible:    { label: "Newly Accessible",     color: "#22c55e", textColor: "#fff", icon: "✓" },
 };
 
 export const SCORE_BANDS = [

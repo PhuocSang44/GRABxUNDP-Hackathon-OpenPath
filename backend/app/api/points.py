@@ -36,6 +36,7 @@ def list_points(db: Session = Depends(get_db)):
             "has_parking": p.has_parking,
             "has_elevator": p.has_elevator,
             "is_community_report": p.is_community_report,
+            "photo_url": p.photo_url,
             "last_updated": p.last_updated.isoformat() if p.last_updated else None,
         }
         for p in points

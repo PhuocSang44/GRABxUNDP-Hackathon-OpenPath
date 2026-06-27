@@ -39,5 +39,17 @@
   - frontend/app/page.tsx
   - frontend/app/layout.tsx
   - frontend/app/globals.css
-- Known risk or unresolved issue: None blocking. Backend must be running for map to load segments.
+
+### Session 002 — 2026-06-27 (Current)
+
+- Goal: feat-006 (Community Reporting with Camera Uploads)
+- Completed:
+  - Added `photo_url` to `AccessibilityPoint` model with Alembic migration.
+  - Implemented `POST /api/reports` endpoint in FastAPI handling multipart/form-data with file upload to local `uploads` directory.
+  - Modified frontend map to listen for clicks, render a `ReportForm` popup.
+  - Form successfully uploads a new report point and photo, which is immediately visible on the map.
+- Verification run: `cd frontend && npm run build` (exit 0) and `npm run lint` (0 errors)
+- Evidence captured: Features tested locally.
+- Known risk or unresolved issue: `photo_url` points to a local API URL (`/uploads/...`), which is suitable for Hackathon MVP, but will need an S3-like bucket for production.
+
 - Next best step: feat-004 — AI analysis pipeline, then feat-005 — route recommendation

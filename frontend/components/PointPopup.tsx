@@ -16,7 +16,7 @@ export default function PointPopup({ point, onClose }: Props) {
   const cfg = CATEGORY_CONFIG[point.category];
   const scoreColor = getScoreColor(point.accessibility_score);
   const scoreLabel = getScoreLabel(point.accessibility_score);
-  const photos = getPointPhotos(point.id, point.category);
+  const photos = getPointPhotos(point);
 
   const lastUpdated = point.last_updated
     ? new Date(point.last_updated).toLocaleDateString("en-GB", {

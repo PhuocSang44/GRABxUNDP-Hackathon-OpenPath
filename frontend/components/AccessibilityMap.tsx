@@ -16,6 +16,7 @@ import PointPopup from "./PointPopup";
 import Legend from "./Legend";
 import ClusterMarker from "./map/ClusterMarker";
 import ClusterGallery from "./map/ClusterGallery";
+import ReportForm from "./ReportForm";
 
 interface Props {
   points: AccessibilityPoint[];
@@ -48,7 +49,7 @@ function buildGeoJSON(points: AccessibilityPoint[]): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
     features: points.map((p) => {
-      const photos = getPointPhotos(p.id, p.category);
+      const photos = getPointPhotos(p);
       return {
         type: "Feature",
         id: p.id,
@@ -78,6 +79,7 @@ export default function AccessibilityMap({ points }: Props) {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [reportLocation, setReportLocation] = useState<{lat: number, lng: number} | null>(null);
 
   const filtered = useMemo(() => applyFilters(points, filters), [points, filters]);
 
@@ -165,6 +167,7 @@ export default function AccessibilityMap({ points }: Props) {
         if (!feature?.properties?.data) return;
         const point: AccessibilityPoint = JSON.parse(feature.properties.data);
         setGalleryItems([]);
+        setReportLocation(null);
         setSelected(point);
       });
 
@@ -217,7 +220,7 @@ export default function AccessibilityMap({ points }: Props) {
                 const items: GalleryItem[] = leaves.flatMap((leaf) => {
                   if (!leaf.properties?.data) return [];
                   const point: AccessibilityPoint = JSON.parse(leaf.properties.data);
-                  const photos = getPointPhotos(point.id, point.category);
+                  const photos = getPointPhotos(point);
                   return photos.length > 0 ? [{ point, photo: photos[0] }] : [];
                 });
                 setSelected(null);
@@ -260,6 +263,15 @@ export default function AccessibilityMap({ points }: Props) {
       (map.getSource("points") as maplibregl.GeoJSONSource).setData(
         buildGeoJSON(applyFilters(points, DEFAULT_FILTERS))
       );
+
+      // Handle map clicks to create reports
+      map.on("click", (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ["unclustered-point"] });
+        if (features.length > 0) return; // Handled by point click
+
+        setSelected(null);
+        setReportLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      });
     });
 
     return () => {
@@ -287,6 +299,26 @@ export default function AccessibilityMap({ points }: Props) {
       buildGeoJSON(filtered)
     );
   }, [filtered]);
+
+  const handleCurrentLocationReport = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (mapRef.current) {
+          mapRef.current.easeTo({ center: [longitude, latitude], zoom: 16, duration: 600 });
+        }
+        setSelected(null);
+        setReportLocation({ lat: latitude, lng: longitude });
+      },
+      (error) => {
+        alert("Unable to retrieve your location. Please check your browser permissions.");
+      }
+    );
+  };
 
   const hasActiveFilters =
     filters.categories.length > 0 ||
@@ -351,6 +383,31 @@ export default function AccessibilityMap({ points }: Props) {
       />
 
       <Legend />
+
+      <button
+        onClick={handleCurrentLocationReport}
+        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 hover:bg-blue-700 hover:shadow-xl transition-all"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Report at Current Location
+      </button>
+
+      {reportLocation && (
+        <div className="absolute top-4 right-4 z-10">
+          <ReportForm
+            lat={reportLocation.lat}
+            lng={reportLocation.lng}
+            onClose={() => setReportLocation(null)}
+            onSubmitSuccess={() => {
+              setReportLocation(null);
+              window.location.reload();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
