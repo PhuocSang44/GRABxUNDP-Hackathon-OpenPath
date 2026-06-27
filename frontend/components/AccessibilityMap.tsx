@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { LuAccessibility } from "react-icons/lu";
 import { useRouter } from "next/navigation";
