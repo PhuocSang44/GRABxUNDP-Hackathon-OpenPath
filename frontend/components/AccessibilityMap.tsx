@@ -381,6 +381,18 @@ export default function AccessibilityMap({ points }: Props) {
         buildGeoJSON(applyFilters(points, DEFAULT_FILTERS))
       );
 
+      // Focus on user's current location if permitted
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            map.flyTo({ center: [longitude, latitude], zoom: 15, duration: 1500 });
+          },
+          () => {
+            // Silently fallback to HCMC_CENTER if permission denied or error
+          }
+        );
+      }
     });
 
     const currentClusterMarkers = clusterMarkersRef.current;
