@@ -5,5 +5,7 @@ psycopg2-binary
 python-dotenv
 pydantic-settings
 alembic
+geoalchemy2
+shapely
 supabase
 
