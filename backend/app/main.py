@@ -8,7 +8,8 @@ app = FastAPI(title="AccessibleMap API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000",
+                   "https://grab-undp-hackathon-open-path.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
