@@ -12,34 +12,6 @@ interface Props {
   filtered: number;
 }
 
-function Toggle({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 cursor-pointer select-none">
-      <div
-        onClick={() => onChange(!checked)}
-        className={`relative w-9 h-5 rounded-full transition-colors ${
-          checked ? "bg-blue-500" : "bg-gray-200"
-        }`}
-      >
-        <div
-          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-            checked ? "translate-x-4" : ""
-          }`}
-        />
-      </div>
-      <span className="text-sm text-gray-700">{label}</span>
-    </label>
-  );
-}
-
 const ALL_CATEGORIES = Object.keys(CATEGORY_CONFIG) as PointCategory[];
 
 export default function FilterPanel({ filters, onChange, visible, onClose, total, filtered }: Props) {
@@ -152,6 +124,7 @@ export default function FilterPanel({ filters, onChange, visible, onClose, total
             <span>100</span>
           </div>
         </div>
+
       </div>
 
       {/* Footer */}

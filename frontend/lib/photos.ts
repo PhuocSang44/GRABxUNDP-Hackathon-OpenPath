@@ -1,4 +1,4 @@
-import { PhotoItem } from "./types";
+import { PhotoItem, AccessibilityPoint } from "./types";
 
 const PHOTO_CAPTIONS = [
   "Blocked sidewalk reported by community member",
@@ -13,17 +13,36 @@ const PHOTO_CAPTIONS = [
   "Drain grate gaps wide enough to trap wheelchair wheels",
 ];
 
-const PHOTO_CATEGORIES = ["community_report", "accessibility_issue"];
+const PHOTO_CATEGORIES = [
+  "community_report",
+  "accessibility_issue",
+  "blocked_sidewalk",
+  "construction",
+  "broken_curb_ramp",
+];
 
-export function getPointPhotos(pointId: number, category: string): PhotoItem[] {
-  if (!PHOTO_CATEGORIES.includes(category)) return [];
+export function getPointPhotos(point: AccessibilityPoint): PhotoItem[] {
+  if (point.photo_url) {
+    const fullUrl = point.photo_url.startsWith("http")
+      ? point.photo_url
+      : `http://localhost:8000${point.photo_url}`;
+    return [{
+      id: `${point.id}-uploaded`,
+      url: fullUrl,
+      thumbUrl: fullUrl,
+      caption: point.description || "Community Report Image",
+      created_at: point.last_updated || new Date().toISOString(),
+    }];
+  }
 
+  if (!PHOTO_CATEGORIES.includes(point.category)) return [];
+
+  const pointId = point.id;
   const count = (pointId % 3) + 1; // 1–3 photos, deterministic per point
 
   return Array.from({ length: count }, (_, i) => {
     const seed = `hcmc-access-${pointId}-${i}`;
     const captionIdx = (pointId + i) % PHOTO_CAPTIONS.length;
-    // Created_at: staggered back in time from now, deterministic
     const msAgo = (pointId * 3_600_000 + i * 1_800_000) % (7 * 24 * 3_600_000);
     return {
       id: `${pointId}-photo-${i}`,

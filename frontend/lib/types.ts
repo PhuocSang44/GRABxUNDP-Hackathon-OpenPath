@@ -19,7 +19,10 @@ export type PointCategory =
   | "accessible_entrance"
   | "bus_stop"
   | "community_report"
-  | "accessibility_issue";
+  | "accessibility_issue"
+  | "blocked_sidewalk"
+  | "construction"
+  | "broken_curb_ramp";
 
 export interface AccessibilityPoint {
   id: number;
@@ -38,29 +41,18 @@ export interface AccessibilityPoint {
   has_parking: boolean;
   has_elevator: boolean;
   is_community_report: boolean;
+  photo_url?: string | null;
   last_updated: string | null;
 }
 
 export interface FilterState {
   categories: PointCategory[];
   minScore: number;
-  verifiedOnly: boolean;
-  hasRamp: boolean;
-  hasToilet: boolean;
-  hasParking: boolean;
-  hasElevator: boolean;
-  communityReportsOnly: boolean;
 }
 
 export const DEFAULT_FILTERS: FilterState = {
   categories: [],
   minScore: 0,
-  verifiedOnly: false,
-  hasRamp: false,
-  hasToilet: false,
-  hasParking: false,
-  hasElevator: false,
-  communityReportsOnly: false,
 };
 
 // Legacy road segment type kept for API compatibility

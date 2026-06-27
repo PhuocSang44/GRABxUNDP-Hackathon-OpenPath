@@ -28,6 +28,9 @@ export const CATEGORY_CONFIG: Record<PointCategory, CategoryConfig> = {
   bus_stop:            { label: "Bus Stop",              color: "#f97316", textColor: "#fff", icon: "B", IconComponent: LuBus },
   community_report:    { label: "Community Report",     color: "#eab308", textColor: "#000", icon: "C", IconComponent: LuMessageSquareWarning },
   accessibility_issue: { label: "Accessibility Issue",  color: "#dc2626", textColor: "#fff", icon: "!", IconComponent: LuTriangleAlert },
+  blocked_sidewalk:    { label: "Blocked Sidewalk",     color: "#f97316", textColor: "#fff", icon: "!", IconComponent: LuTriangleAlert },
+  construction:        { label: "Construction",         color: "#ca8a04", textColor: "#fff", icon: "!", IconComponent: LuTriangleAlert },
+  broken_curb_ramp:    { label: "Broken Curb Ramp",     color: "#7c3aed", textColor: "#fff", icon: "!", IconComponent: LuTriangleAlert },
 };
 
 export const SCORE_BANDS = [
