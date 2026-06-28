@@ -11,3 +11,7 @@ supabase
 python-multipart
 passlib[bcrypt]
 pyjwt
+httpx
+anthropic
+google-genai
+Pillow

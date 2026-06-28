@@ -1,0 +1,235 @@
+{
+  "route": {
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          106.800561,
+          10.877073
+        ],
+        [
+          106.800561,
+          10.877073
+        ],
+        [
+          106.800657,
+          10.876761
+        ],
+        [
+          106.800775,
+          10.876457
+        ],
+        [
+          106.801164,
+          10.876538
+        ],
+        [
+          106.80182,
+          10.87662
+        ],
+        [
+          106.80148,
+          10.876575
+        ],
+        [
+          106.802226,
+          10.876642
+        ],
+        [
+          106.802666,
+          10.876635
+        ],
+        [
+          106.803034,
+          10.87659
+        ],
+        [
+          106.80295,
+          10.876899
+        ],
+        [
+          106.802886,
+          10.877048
+        ],
+        [
+          106.80288,
+          10.877044
+        ]
+      ]
+    },
+    "distance_km": 0.45,
+    "duration_min": 5.6
+  },
+  "checkpoints": [
+    {
+      "id": "b06d39df-f74b-4ab5-8072-698539748a53",
+      "lat": 10.877073,
+      "lng": 106.800561,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "wide",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp1.jpg"
+    },
+    {
+      "id": "e2287231-f066-4e61-92ee-c415b116d65f",
+      "lat": 10.876761,
+      "lng": 106.800657,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": false,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp2.jpg"
+    },
+    {
+      "id": "5f2e2cc4-7156-4645-88c5-5e201b68b982",
+      "lat": 10.876457,
+      "lng": 106.800775,
+      "accessibility": "moderate",
+      "sidewalk": true,
+      "width": "wide",
+      "surface": "smooth concrete",
+      "curb_ramp": false,
+      "obstacles": [
+        "parked motorcycle"
+      ],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp3.jpg"
+    },
+    {
+      "id": "1dfd137d-d413-44a9-82e3-33f8a137dd56",
+      "lat": 10.876538,
+      "lng": 106.801164,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp4.jpg"
+    },
+    {
+      "id": "627cb1cc-1cb2-4bbc-9bb4-0ffd3c344ff2",
+      "lat": 10.87662,
+      "lng": 106.80182,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp6.jpg"
+    },
+    {
+      "id": "121e3cb3-44cb-416f-8d01-274fa4d91128",
+      "lat": 10.876575,
+      "lng": 106.80148,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp5.jpg"
+    },
+    {
+      "id": "d2f1547a-2331-4304-9a60-b542570579c5",
+      "lat": 10.876642,
+      "lng": 106.802226,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp7.jpg"
+    },
+    {
+      "id": "0bcf751a-a91b-49a4-86ed-25335d643c0d",
+      "lat": 10.876635,
+      "lng": 106.802666,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp8.jpg"
+    },
+    {
+      "id": "64754541-3d37-4411-b2f3-c4c4a1a30216",
+      "lat": 10.87659,
+      "lng": 106.803034,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp9.jpg"
+    },
+    {
+      "id": "16194d72-d0ed-4157-89d0-6a3c691b0924",
+      "lat": 10.876899,
+      "lng": 106.80295,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp10.jpg"
+    },
+    {
+      "id": "64f2ea4d-c906-4eb8-a8a6-2c95831f42f2",
+      "lat": 10.877048,
+      "lng": 106.802886,
+      "accessibility": "good",
+      "sidewalk": true,
+      "width": "medium",
+      "surface": "smooth concrete",
+      "curb_ramp": true,
+      "obstacles": [],
+      "confidence": 0.9,
+      "analyzed_at": "2026-06-28T01:09:25.113522+00:00",
+      "street_view_url": "/demo/checkpoints/cp11.jpg"
+    }
+  ],
+  "summary": {
+    "accessibility_rating": "good",
+    "sidewalk_coverage": 1.0,
+    "dominant_surface": "smooth concrete",
+    "has_curb_ramps": true,
+    "total_obstacles": [
+      "parked motorcycle"
+    ],
+    "has_narrow_sections": false,
+    "good_count": 10,
+    "moderate_count": 1,
+    "poor_count": 0,
+    "total_checkpoints": 11
+  }
+}

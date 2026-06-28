@@ -1,4 +1,4 @@
-import { AccessibilityPoint, RoadSegment } from "./types";
+import { AccessibilityPoint, RoadSegment, RouteResult } from "./types";
 import { API_BASE_URL } from "./config";
 
 export async function fetchPoints(): Promise<AccessibilityPoint[]> {
@@ -53,5 +53,28 @@ export async function hideReport(id: number, token: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("Failed to hide report");
+  return res.json();
+}
+
+export async function analyzeRoute(
+  originLat: number,
+  originLng: number,
+  destLat: number,
+  destLng: number,
+): Promise<RouteResult> {
+  const res = await fetch(`${API_BASE_URL}/api/route/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      origin_lat: originLat,
+      origin_lng: originLng,
+      dest_lat: destLat,
+      dest_lng: destLng,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { detail?: string };
+    throw new Error(err.detail ?? "Failed to analyze route");
+  }
   return res.json();
 }
