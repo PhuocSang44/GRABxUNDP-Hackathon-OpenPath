@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AccessibleMap — Ho Chi Minh City",
+  title: "OpenPath — Ho Chi Minh City",
   description: "Wheelchair accessibility map for Ho Chi Minh City",
 };
 

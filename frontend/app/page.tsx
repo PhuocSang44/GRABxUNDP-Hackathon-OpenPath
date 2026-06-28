@@ -15,11 +15,11 @@ export default async function Home() {
   return (
     <main className="flex flex-col h-full overflow-hidden">
       <header className="shrink-0 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shadow-sm z-20">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500 text-white font-bold text-sm">
-          A
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden shrink-0">
+          <img src="/Icon.jpg" alt="OpenPath Logo" className="w-full h-full object-cover" />
         </div>
         <div>
-          <h1 className="font-bold text-gray-900 leading-none text-sm">AccessibleMap</h1>
+          <h1 className="font-bold text-gray-900 leading-none text-sm">OpenPath</h1>
           <p className="hidden sm:block text-xs text-gray-500 leading-none mt-0.5">
             Ho Chi Minh City — Wheelchair Accessibility
           </p>
