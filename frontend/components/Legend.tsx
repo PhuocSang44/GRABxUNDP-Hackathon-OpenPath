@@ -19,26 +19,6 @@ export default function Legend() {
 
         {open && (
           <div className="px-3 pb-3 space-y-3 border-t border-gray-100">
-            {/* Score colors */}
-            <div>
-              <div className="text-xs font-medium text-gray-500 mt-2 mb-1.5 uppercase tracking-wide">
-                Score Ring
-              </div>
-              <div className="space-y-1">
-                {SCORE_BANDS.map((b) => (
-                  <div key={b.label} className="flex items-center gap-2">
-                    <div
-                      className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                      style={{ backgroundColor: b.color }}
-                    />
-                    <span className="text-xs text-gray-600">
-                      {b.min}–{b.max} {b.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Categories */}
             <div>
               <div className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">

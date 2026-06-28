@@ -77,38 +77,7 @@ export default function PointPopup({ point, onClose }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Score */}
-        <div className="px-4 py-3 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="relative w-14 h-14 shrink-0">
-              <svg viewBox="0 0 36 36" className="w-14 h-14 -rotate-90">
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f1f5f9" strokeWidth="3" />
-                <circle
-                  cx="18" cy="18" r="15.9" fill="none"
-                  stroke={scoreColor} strokeWidth="3"
-                  strokeDasharray={`${point.accessibility_score} ${100 - point.accessibility_score}`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold text-gray-900">
-                  {point.accessibility_score}
-                </span>
-              </div>
-            </div>
-            <div>
-              <div className="font-semibold text-sm" style={{ color: scoreColor }}>
-                {scoreLabel}
-              </div>
-              <div className="text-xs text-gray-500">Accessibility score</div>
-              {lastUpdated && (
-                <div className="text-xs text-gray-400 mt-0.5">
-                  Updated {lastUpdated}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+
 
         {/* Photo carousel */}
         {photos.length > 0 && (
