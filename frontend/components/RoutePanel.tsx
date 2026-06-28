@@ -346,15 +346,23 @@ export default function RoutePanel({
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
       });
+      // MapLibre does not support data-driven line-dasharray, so use two layers:
+      // one solid layer for taxi/bus/metro, one dashed for short walk legs.
       map.addLayer({
-        id: "trip-plan-layer", type: "line", source: "trip-plan-source",
+        id: "trip-plan-transit-layer",
+        type: "line",
+        source: "trip-plan-source",
+        filter: ["!=", ["get", "mode"], "walk"],
         layout: { "line-join": "round", "line-cap": "round" },
-        paint: {
-          "line-color": ["get", "color"],
-          "line-width": 5, "line-opacity": 0.9,
-          "line-dasharray": ["case", ["==", ["get", "mode"], "walk"],
-            ["literal", [1, 2]], ["literal", [1, 0]]],
-        },
+        paint: { "line-color": ["get", "color"], "line-width": 5, "line-opacity": 0.9 },
+      });
+      map.addLayer({
+        id: "trip-plan-walk-layer",
+        type: "line",
+        source: "trip-plan-source",
+        filter: ["==", ["get", "mode"], "walk"],
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.8, "line-dasharray": [2, 2] },
       });
       tripInitRef.current = true;
     };
