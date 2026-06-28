@@ -4,23 +4,36 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { LuAccessibility } from "react-icons/lu";
+import { useRouter } from "next/navigation";
 import maplibregl from "maplibre-gl";
 import * as GeoJSON from "geojson";
 import {
+  AccessibilityCheckpoint,
   AccessibilityPoint,
   DEFAULT_FILTERS,
   FilterState,
   GalleryItem,
   PointCategory,
+  RouteResult,
 } from "@/lib/types";
 import { CATEGORY_CONFIG } from "@/lib/markers";
 import { getPointPhotos } from "@/lib/photos";
+import { useAuth } from "./AuthContext";
+import { analyzeRoute } from "@/lib/api";
 import FilterPanel from "./FilterPanel";
 import PointPopup from "./PointPopup";
+import CheckpointPopup from "./CheckpointPopup";
+import RoutePanel from "./RoutePanel";
 import Legend from "./Legend";
 import ClusterGallery from "./map/ClusterGallery";
 import ReportForm from "./ReportForm";
 import TripPlannerPanel from "./TripPlannerPanel";
+
+const CHECKPOINT_COLORS: Record<string, string> = {
+  good:     "#22c55e",
+  moderate: "#eab308",
+  poor:     "#ef4444",
+};
 
 interface Props {
   points: AccessibilityPoint[];
@@ -90,8 +103,12 @@ export default function AccessibilityMap({ points }: Props) {
   const mapLoadedRef = useRef(false);
   const clusterMarkersRef = useRef(new Map<number, MarkerEntry>());
   const pointMarkersRef = useRef(new Map<number, MarkerEntry>());
+  const checkpointMarkersRef = useRef(new Map<string, MarkerEntry>());
   const previewMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const destMarkerRef = useRef<maplibregl.Marker | null>(null);
   const pointIconHtmlRef = useRef<Record<string, string>>({});
+  const router = useRouter();
+  const { user } = useAuth();
 
   const [selected, setSelected] = useState<AccessibilityPoint | null>(null);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -100,6 +117,19 @@ export default function AccessibilityMap({ points }: Props) {
   const [reportLocation, setReportLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [reportCategory, setReportCategory] = useState<PointCategory>("community_report");
   const [isTripPlannerOpen, setIsTripPlannerOpen] = useState(false);
+
+  // ── Route state ────────────────────────────────────────────────────────────
+  const [isRoutingMode, setIsRoutingMode] = useState(false);
+  const isRoutingModeRef = useRef(false);  // stable ref readable inside map closures
+  const [routeDest, setRouteDest] = useState<{ lat: number; lng: number } | null>(null);
+  const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
+  const [routeOrigin, setRouteOrigin] = useState<{ lat: number; lng: number } | null>(null);
+  const originMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState<AccessibilityCheckpoint | null>(null);
+
+  // Fixed demo route coordinates — must match seed_demo_route.py
+  const DEMO_ORIGIN = { lat: 10.877073, lng: 106.800561 };
+  const DEMO_DEST   = { lat: 10.877044, lng: 106.802880 };
 
   const filtered = useMemo(() => applyFilters(points, filters), [points, filters]);
 
@@ -363,8 +393,33 @@ export default function AccessibilityMap({ points }: Props) {
         if (e.sourceId === "points") syncNeeded = true;
       });
 
-      // Open ReportForm when clicking empty map area (markers call stopPropagation)
+      // Route line source + layers (added once; data updated when routeResult changes)
+      map.addSource("route", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "route-outline",
+        type: "line",
+        source: "route",
+        paint: { "line-color": "#1d4ed8", "line-width": 8, "line-opacity": 0.25 },
+        layout: { "line-join": "round", "line-cap": "round" },
+      });
+      map.addLayer({
+        id: "route-line",
+        type: "line",
+        source: "route",
+        paint: { "line-color": "#3b82f6", "line-width": 4, "line-opacity": 0.9 },
+        layout: { "line-join": "round", "line-cap": "round" },
+      });
+
+      // Map click: routing mode → set destination; otherwise open report form
       map.on("click", (e) => {
+        // isRoutingMode is captured via ref so the closure always reads the latest value
+        if (isRoutingModeRef.current) {
+          setRouteDest({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+          return;
+        }
         setSelected(null);
         setGalleryItems([]);
         setReportLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
@@ -376,15 +431,41 @@ export default function AccessibilityMap({ points }: Props) {
       (map.getSource("points") as maplibregl.GeoJSONSource).setData(
         buildGeoJSON(applyFilters(points, DEFAULT_FILTERS))
       );
+
+      // Focus on user's current location if permitted
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            map.flyTo({ center: [longitude, latitude], zoom: 15, duration: 1500 });
+          },
+          () => {
+            // Silently fallback to HCMC_CENTER if permission denied or error
+          }
+        );
+      }
     });
+
+    const currentClusterMarkers = clusterMarkersRef.current;
+    const currentPointMarkers = pointMarkersRef.current;
 
     return () => {
       if (previewMarkerRef.current) {
         previewMarkerRef.current.remove();
         previewMarkerRef.current = null;
       }
+      if (destMarkerRef.current) {
+        destMarkerRef.current.remove();
+        destMarkerRef.current = null;
+      }
+      if (originMarkerRef.current) {
+        originMarkerRef.current.remove();
+        originMarkerRef.current = null;
+      }
+      for (const { marker } of checkpointMarkersRef.current.values()) marker.remove();
+      checkpointMarkersRef.current.clear();
       mapLoadedRef.current = false;
-      removeAll(clusterMarkersRef.current, pointMarkersRef.current);
+      removeAll(currentClusterMarkers, currentPointMarkers);
       map.remove();
       mapRef.current = null;
     };
@@ -398,6 +479,118 @@ export default function AccessibilityMap({ points }: Props) {
       buildGeoJSON(filtered)
     );
   }, [filtered]);
+
+  // Keep isRoutingModeRef in sync so map click closures read the live value.
+  useEffect(() => {
+    isRoutingModeRef.current = isRoutingMode;
+  }, [isRoutingMode]);
+
+  // ── Destination marker ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (destMarkerRef.current) {
+      destMarkerRef.current.remove();
+      destMarkerRef.current = null;
+    }
+    if (!routeDest || !mapRef.current || !mapLoadedRef.current) return;
+
+    const el = document.createElement("div");
+    el.style.cssText = [
+      "width:20px;height:20px;border-radius:50%;",
+      "background:#ef4444;border:3px solid #fff;",
+      "box-shadow:0 2px 8px rgba(0,0,0,0.4);",
+    ].join("");
+
+    destMarkerRef.current = new maplibregl.Marker({ element: el, anchor: "center" })
+      .setLngLat([routeDest.lng, routeDest.lat])
+      .addTo(mapRef.current);
+  }, [routeDest]);
+
+  // ── Origin marker ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (originMarkerRef.current) {
+      originMarkerRef.current.remove();
+      originMarkerRef.current = null;
+    }
+    if (!routeOrigin || !mapRef.current || !mapLoadedRef.current) return;
+
+    const el = document.createElement("div");
+    el.style.cssText = [
+      "width:20px;height:20px;border-radius:50%;",
+      "background:#3b82f6;border:3px solid #fff;",
+      "box-shadow:0 2px 8px rgba(0,0,0,0.4);",
+    ].join("");
+
+    originMarkerRef.current = new maplibregl.Marker({ element: el, anchor: "center" })
+      .setLngLat([routeOrigin.lng, routeOrigin.lat])
+      .addTo(mapRef.current);
+  }, [routeOrigin]);
+
+  // ── Route line + checkpoint markers ───────────────────────────────────────
+  useEffect(() => {
+    if (!mapRef.current || !mapLoadedRef.current) return;
+    const map = mapRef.current;
+
+    // Clear previous checkpoint markers
+    for (const { marker } of checkpointMarkersRef.current.values()) marker.remove();
+    checkpointMarkersRef.current.clear();
+
+    if (!routeResult) {
+      (map.getSource("route") as maplibregl.GeoJSONSource)?.setData({
+        type: "FeatureCollection",
+        features: [],
+      });
+      return;
+    }
+
+    // Draw route line
+    (map.getSource("route") as maplibregl.GeoJSONSource).setData({
+      type: "Feature",
+      geometry: routeResult.route.geometry,
+      properties: {},
+    });
+
+    // Fit map to route bounds
+    const coords = routeResult.route.geometry.coordinates as [number, number][];
+    if (coords.length > 1) {
+      const bounds = coords.reduce(
+        (b, c) => b.extend(c),
+        new maplibregl.LngLatBounds(coords[0], coords[0])
+      );
+      map.fitBounds(bounds, { padding: 60, maxZoom: 17, duration: 800 });
+    }
+
+    // Add checkpoint markers
+    for (const cp of routeResult.checkpoints) {
+      const color = CHECKPOINT_COLORS[cp.accessibility] ?? "#6b7280";
+      const wrapper = document.createElement("div");
+      wrapper.style.cssText = "width:18px;height:18px;";
+
+      const dot = document.createElement("div");
+      dot.style.cssText = [
+        "width:18px;height:18px;border-radius:50%;",
+        `background:${color};border:2px solid #fff;`,
+        "box-shadow:0 1px 4px rgba(0,0,0,0.3);",
+        "cursor:pointer;transition:transform 0.12s ease;",
+      ].join("");
+
+      dot.addEventListener("mouseenter", () => { dot.style.transform = "scale(1.35)"; });
+      dot.addEventListener("mouseleave", () => { dot.style.transform = ""; });
+      dot.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setSelected(null);
+        setReportLocation(null);
+        setSelectedCheckpoint(cp);
+      });
+
+      wrapper.appendChild(dot);
+
+      const marker = new maplibregl.Marker({ element: wrapper, anchor: "center" })
+        .setLngLat([cp.lng, cp.lat])
+        .addTo(map);
+
+      checkpointMarkersRef.current.set(cp.id, { marker });
+    }
+  }, [routeResult]);
 
   // ── Preview marker for in-progress report ──────────────────────────────────
   useEffect(() => {
@@ -443,6 +636,10 @@ export default function AccessibilityMap({ points }: Props) {
   }, [reportLocation, reportCategory]);
 
   const handleCurrentLocationReport = () => {
+    if (!user) {
+      router.push("/profile");
+      return;
+    }
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
       return;
@@ -461,6 +658,56 @@ export default function AccessibilityMap({ points }: Props) {
         alert("Unable to retrieve your location. Please check your browser permissions.");
       }
     );
+  };
+
+  // ── Route analysis ──────────────────────────────────────────────────────────
+  const handleAnalyzeRoute = async () => {
+    if (!routeDest) return;
+
+    const getOrigin = (): Promise<{ lat: number; lng: number }> =>
+      new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve({ lat: HCMC_CENTER[1], lng: HCMC_CENTER[0] });
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => resolve({ lat: HCMC_CENTER[1], lng: HCMC_CENTER[0] }),
+          { timeout: 5000, maximumAge: 30_000 },
+        );
+      });
+
+    const origin = await getOrigin();
+    setRouteOrigin(origin);
+    const result = await analyzeRoute(origin.lat, origin.lng, routeDest.lat, routeDest.lng);
+    setRouteResult(result);
+    setIsRoutingMode(false);
+  };
+
+  const handleAnalyzeDemoRoute = async () => {
+    setRouteOrigin(DEMO_ORIGIN);
+    setRouteDest(DEMO_DEST);
+    setIsRoutingMode(false);
+    // Load pre-generated static JSON — no live API or OSRM call during the demo
+    const resp = await fetch("/demo/demo_route.json");
+    if (!resp.ok) throw new Error("Demo route data not found — run seed_demo_manual.py first");
+    const result: RouteResult = await resp.json();
+    setRouteResult(result);
+  };
+
+  const handleClearRoute = () => {
+    setRouteResult(null);
+    setSelectedCheckpoint(null);
+    setRouteOrigin(null);
+    if (destMarkerRef.current) {
+      destMarkerRef.current.remove();
+      destMarkerRef.current = null;
+    }
+    if (originMarkerRef.current) {
+      originMarkerRef.current.remove();
+      originMarkerRef.current = null;
+    }
+    setRouteDest(null);
   };
 
   const hasActiveFilters =
@@ -532,8 +779,6 @@ export default function AccessibilityMap({ points }: Props) {
         <span className="hidden md:inline">Plan Trip</span>
         <span className="md:hidden">Trip</span>
       </button>
-<<<<<<< Updated upstream
-=======
 
       {/* Route panel + checkpoint popup */}
       <RoutePanel
@@ -561,7 +806,6 @@ export default function AccessibilityMap({ points }: Props) {
           Click anywhere on the map to set your destination
         </div>
       )}
->>>>>>> Stashed changes
 
       {/* Report at current location — desktop pill (hidden on mobile) */}
       <button

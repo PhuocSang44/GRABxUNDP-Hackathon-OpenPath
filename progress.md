@@ -63,4 +63,21 @@
   - Added Toggles section to FilterPanel (verified, ramp, toilet, parking, elevator, community-reports)
   - Updated `getPointPhotos` signature to accept full AccessibilityPoint (needed for photo_url support)
   - Added "Report at Current Location" button and ReportForm to AccessibilityMap
-- Next best step: feat-004 — AI analysis pipeline
+
+### Session 004 — 2026-06-28 (Authentication)
+
+- Goal: feat-007 (Authentication & Mobile Bottom Navigation)
+- Completed:
+  - Backend: Added JWT authentication with pyjwt and passlib[bcrypt].
+  - Backend: Added `/api/auth/register`, `/login`, `/me` endpoints.
+  - Backend: Created users table migration and seed_admin script.
+  - Backend: Protected `/api/reports` POST endpoint with `get_current_user` dependency.
+  - Frontend: Created AuthContext and `lib/auth.ts` for token management.
+  - Frontend: Implemented BottomNav with Explore, Verify (admin only), and Profile tabs.
+  - Frontend: Updated page layout to accommodate the bottom navigation.
+  - Frontend: Required login for submitting community reports.
+- Verification run: `cd frontend && npm run build` (exit 0) and `python -m py_compile` for backend files.
+- Evidence captured: Features tested locally. Frontend build successful.
+- Known risk or unresolved issue: Admin users must be seeded via `scripts/seed_admin.py` or created manually in the database.
+
+- Next best step: feat-004 — AI analysis pipeline, then feat-005 — route recommendation

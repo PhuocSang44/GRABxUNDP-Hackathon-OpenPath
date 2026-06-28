@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Link from "next/link";
 import { PointCategory } from "@/lib/types";
 import { CATEGORY_CONFIG } from "@/lib/markers";
 import { API_BASE_URL } from "@/lib/config";
+import { getToken, getAuthHeaders } from "@/lib/auth";
 
 const ISSUE_CATEGORIES: PointCategory[] = [
   "community_report",
@@ -59,8 +61,11 @@ export default function ReportForm({ lat, lng, onClose, onSubmitSuccess, onCateg
     setPreviewUrl(null);
   };
 
+  const token = getToken();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) return;
     setIsSubmitting(true);
     setError(null);
 
@@ -74,6 +79,7 @@ export default function ReportForm({ lat, lng, onClose, onSubmitSuccess, onCateg
     try {
       const res = await fetch(`${API_BASE_URL}/api/reports`, {
         method: "POST",
+        headers: getAuthHeaders(),
         body: formData,
       });
       if (!res.ok) throw new Error("Failed to submit report");
@@ -86,6 +92,29 @@ export default function ReportForm({ lat, lng, onClose, onSubmitSuccess, onCateg
   };
 
   const cfg = CATEGORY_CONFIG[category];
+
+  if (!token) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-4 w-72 md:w-80 relative z-50">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Sign In Required</h3>
+        <p className="text-sm text-gray-600 mb-4">Please log in to submit accessibility reports.</p>
+        <Link
+          href="/profile"
+          className="block w-full text-center bg-green-500 text-white rounded-lg py-2 font-medium hover:bg-green-600 transition-colors text-sm"
+        >
+          Go to Sign In
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:w-80 overflow-hidden max-h-[90vh] md:max-h-[calc(100vh-6rem)] flex flex-col">

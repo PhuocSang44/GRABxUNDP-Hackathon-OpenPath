@@ -55,6 +55,48 @@ export const DEFAULT_FILTERS: FilterState = {
   minScore: 0,
 };
 
+// ── Route Accessibility ────────────────────────────────────────────────────────
+
+export type AccessibilityRating = "good" | "moderate" | "poor";
+
+export interface AccessibilityCheckpoint {
+  id: string;
+  lat: number;
+  lng: number;
+  accessibility: AccessibilityRating;
+  sidewalk: boolean;
+  width: "narrow" | "medium" | "wide";
+  surface: string;
+  curb_ramp: boolean;
+  obstacles: string[];
+  confidence: number;
+  analyzed_at: string | null;
+  street_view_url: string;
+}
+
+export interface RouteSummary {
+  accessibility_rating: AccessibilityRating | "unknown";
+  sidewalk_coverage: number;
+  dominant_surface: string;
+  has_curb_ramps: boolean;
+  total_obstacles: string[];
+  has_narrow_sections: boolean;
+  good_count: number;
+  moderate_count: number;
+  poor_count: number;
+  total_checkpoints: number;
+}
+
+export interface RouteResult {
+  route: {
+    geometry: GeoJSON.LineString;
+    distance_km: number;
+    duration_min: number;
+  };
+  checkpoints: AccessibilityCheckpoint[];
+  summary: RouteSummary;
+}
+
 // Legacy road segment type kept for API compatibility
 export interface RoadSegment {
   id: number;
