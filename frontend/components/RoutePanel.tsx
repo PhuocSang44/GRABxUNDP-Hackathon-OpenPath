@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { RouteResult } from "@/lib/types";
 import maplibregl from "maplibre-gl";
 import * as GeoJSON from "geojson";
@@ -335,19 +335,24 @@ export default function RoutePanel({
   const [isPlanning, setIsPlanning] = useState(false);
   const [transit, setTransit] = useState<TransitPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const tripInitRef = useRef(false);
 
-  // ── Init trip-plan map source once map is ready ─────────────────────────
+  // ── Draw transit lines (init source/layers lazily; clear when transit=null) ─
   useEffect(() => {
-    if (!map || tripInitRef.current) return;
-    const init = () => {
-      if (map.getSource("trip-plan-source")) { tripInitRef.current = true; return; }
+    if (!map) return;
+
+    // Ensure source exists
+    if (!map.getSource("trip-plan-source")) {
       map.addSource("trip-plan-source", {
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
       });
-      // MapLibre does not support data-driven line-dasharray, so use two layers:
-      // one solid layer for taxi/bus/metro, one dashed for short walk legs.
+    }
+
+    // Remove legacy single-layer from old code if present (had invalid dasharray)
+    if (map.getLayer("trip-plan-layer")) map.removeLayer("trip-plan-layer");
+
+    // Ensure transit solid layer exists (taxi / bus / metro)
+    if (!map.getLayer("trip-plan-transit-layer")) {
       map.addLayer({
         id: "trip-plan-transit-layer",
         type: "line",
@@ -356,6 +361,10 @@ export default function RoutePanel({
         layout: { "line-join": "round", "line-cap": "round" },
         paint: { "line-color": ["get", "color"], "line-width": 5, "line-opacity": 0.9 },
       });
+    }
+
+    // Ensure walk-leg dashed layer exists
+    if (!map.getLayer("trip-plan-walk-layer")) {
       map.addLayer({
         id: "trip-plan-walk-layer",
         type: "line",
@@ -364,21 +373,16 @@ export default function RoutePanel({
         layout: { "line-join": "round", "line-cap": "round" },
         paint: { "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.8, "line-dasharray": [2, 2] },
       });
-      tripInitRef.current = true;
-    };
-    if (map.isStyleLoaded()) init(); else map.once("load", init);
-    return () => {
-      const src = map.getSource("trip-plan-source");
-      if (src) (src as maplibregl.GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
-    };
-  }, [map]);
+    }
 
-  // ── Draw transit lines + fit to full journey when transit plan updates ──
-  useEffect(() => {
-    if (!map || !transit) return;
-    const src = map.getSource("trip-plan-source");
-    if (!src) return;
+    const src = map.getSource("trip-plan-source") as maplibregl.GeoJSONSource;
 
+    if (!transit) {
+      src.setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+
+    // Build features and set data
     const features: GeoJSON.Feature<GeoJSON.LineString>[] = transit.legs.map(leg => ({
       type: "Feature",
       geometry: leg.geometry ?? {
@@ -387,19 +391,18 @@ export default function RoutePanel({
       },
       properties: { mode: leg.mode, color: MODE_CONFIG[leg.mode].color },
     }));
-    (src as maplibregl.GeoJSONSource).setData({ type: "FeatureCollection", features });
+    src.setData({ type: "FeatureCollection", features });
 
-    // Fit bounds to encompass walking segment + all transit legs
+    // Fit bounds to the full journey: walk route + all transit legs
     const bounds = new maplibregl.LngLatBounds();
     bounds.extend([WALK_ORIGIN[1],   WALK_ORIGIN[0]]);
     bounds.extend([WALK_ENDPOINT[1], WALK_ENDPOINT[0]]);
-    // Also include walking route geometry if available
     if (routeResult) {
       for (const c of routeResult.route.geometry.coordinates) bounds.extend(c as [number, number]);
     }
     transit.legs.forEach(l => {
       bounds.extend([l.fromCoords[1], l.fromCoords[0]]);
-      bounds.extend([l.toCoords[1], l.toCoords[0]]);
+      bounds.extend([l.toCoords[1],   l.toCoords[0]]);
     });
 
     const mobile = typeof window !== "undefined" && window.innerWidth < 768;
