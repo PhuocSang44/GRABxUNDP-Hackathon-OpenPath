@@ -768,7 +768,6 @@ export default function AccessibilityMap({ points }: Props) {
 
       <Legend />
 
-<<<<<<< HEAD
       {/* Trip Planner FAB */}
       <button
         onClick={() => setIsTripPlannerOpen(true)}
@@ -780,7 +779,7 @@ export default function AccessibilityMap({ points }: Props) {
         <span className="hidden md:inline">Plan Trip</span>
         <span className="md:hidden">Trip</span>
       </button>
-=======
+
       {/* Route panel + checkpoint popup */}
       <RoutePanel
         isRoutingMode={isRoutingMode}
@@ -807,7 +806,6 @@ export default function AccessibilityMap({ points }: Props) {
           Click anywhere on the map to set your destination
         </div>
       )}
->>>>>>> fc62599 (feat: add Route Accessibility Insights with Claude AI vision)
 
       {/* Report at current location — desktop pill (hidden on mobile) */}
       <button

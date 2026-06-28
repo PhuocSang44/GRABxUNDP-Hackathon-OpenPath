@@ -45,6 +45,12 @@ const HCMC_LOCATIONS: Location[] = [
   { id: "suoi_tien", name: "Suối Tiên", coords: [10.8653, 106.8016] },
 ];
 
+const FIXED_START_LOC: Location = {
+  id: "my_location",
+  name: "Vị trí của tôi (10.877068, 106.802883)",
+  coords: [10.877068, 106.802883]
+};
+
 const MODE_CONFIG = {
   taxi: { icon: FaTaxi, color: "#f59e0b", label: "Accessible Taxi" },
   metro: { icon: FaTrainSubway, color: "#6366f1", label: "Metro Line 1" },
@@ -244,7 +250,7 @@ interface Props {
 }
 
 export default function TripPlannerPanel({ onClose, map }: Props) {
-  const [fromLoc, setFromLoc] = useState<Location | null>(null);
+  const [fromLoc, setFromLoc] = useState<Location | null>(FIXED_START_LOC);
   const [toLoc, setToLoc] = useState<Location | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
   const [plan, setPlan] = useState<TripPlan | null>(null);
@@ -402,16 +408,10 @@ export default function TripPlannerPanel({ onClose, map }: Props) {
           <div className="p-4 bg-gray-50/50 space-y-4">
             <div>
               <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-2">From</p>
-              <select 
-                className="w-full bg-white border border-gray-200 rounded-xl text-sm p-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-shadow text-gray-700"
-                value={fromLoc?.id || ""}
-                onChange={(e) => setFromLoc(HCMC_LOCATIONS.find(l => l.id === e.target.value) || null)}
-              >
-                <option value="">Select starting point...</option>
-                {HCMC_LOCATIONS.map(loc => (
-                  <option key={loc.id} value={loc.id}>{loc.name}</option>
-                ))}
-              </select>
+              <div className="w-full bg-gray-100 border border-gray-200 rounded-xl text-sm p-2.5 text-gray-700 flex items-center font-medium opacity-80 cursor-not-allowed">
+                <span className="shrink-0 mr-2 text-emerald-600">📍</span>
+                {FIXED_START_LOC.name}
+              </div>
             </div>
 
             <div>
