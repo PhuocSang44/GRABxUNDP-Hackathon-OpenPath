@@ -532,6 +532,36 @@ export default function AccessibilityMap({ points }: Props) {
         <span className="hidden md:inline">Plan Trip</span>
         <span className="md:hidden">Trip</span>
       </button>
+<<<<<<< Updated upstream
+=======
+
+      {/* Route panel + checkpoint popup */}
+      <RoutePanel
+        isRoutingMode={isRoutingMode}
+        onToggleRoutingMode={() => {
+          setIsRoutingMode((v) => !v);
+          setSelected(null);
+          setReportLocation(null);
+        }}
+        destination={routeDest}
+        onClearDestination={() => setRouteDest(null)}
+        onAnalyze={handleAnalyzeRoute}
+        onAnalyzeDemoRoute={handleAnalyzeDemoRoute}
+        routeResult={routeResult}
+        onClearRoute={handleClearRoute}
+      />
+      <CheckpointPopup
+        checkpoint={selectedCheckpoint}
+        onClose={() => setSelectedCheckpoint(null)}
+      />
+
+      {/* Routing mode hint */}
+      {isRoutingMode && !routeDest && (
+        <div className="absolute bottom-24 md:bottom-16 left-1/2 -translate-x-1/2 z-10 bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg pointer-events-none">
+          Click anywhere on the map to set your destination
+        </div>
+      )}
+>>>>>>> Stashed changes
 
       {/* Report at current location — desktop pill (hidden on mobile) */}
       <button
