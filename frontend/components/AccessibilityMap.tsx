@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { LuAccessibility } from "react-icons/lu";
 import { useRouter } from "next/navigation";
-import maplibregl from "maplibre-gl";
+import maplibregl, { type Map as MaplibreMap } from "maplibre-gl";
 import * as GeoJSON from "geojson";
 import {
   AccessibilityCheckpoint,
@@ -27,7 +27,6 @@ import RoutePanel from "./RoutePanel";
 import Legend from "./Legend";
 import ClusterGallery from "./map/ClusterGallery";
 import ReportForm from "./ReportForm";
-import TripPlannerPanel from "./TripPlannerPanel";
 
 const CHECKPOINT_COLORS: Record<string, string> = {
   good:     "#22c55e",
@@ -116,7 +115,7 @@ export default function AccessibilityMap({ points }: Props) {
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [reportLocation, setReportLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [reportCategory, setReportCategory] = useState<PointCategory>("community_report");
-  const [isTripPlannerOpen, setIsTripPlannerOpen] = useState(false);
+  const [mapInstance, setMapInstance] = useState<MaplibreMap | null>(null);
 
   // ── Route state ────────────────────────────────────────────────────────────
   const [isRoutingMode, setIsRoutingMode] = useState(false);
@@ -427,6 +426,7 @@ export default function AccessibilityMap({ points }: Props) {
 
       mapLoadedRef.current = true;
       mapRef.current = map;
+      setMapInstance(map);
 
       (map.getSource("points") as maplibregl.GeoJSONSource).setData(
         buildGeoJSON(applyFilters(points, DEFAULT_FILTERS))
@@ -768,18 +768,6 @@ export default function AccessibilityMap({ points }: Props) {
 
       <Legend />
 
-      {/* Trip Planner FAB */}
-      <button
-        onClick={() => setIsTripPlannerOpen(true)}
-        className="absolute bottom-6 left-4 md:left-6 z-10 bg-emerald-600 text-white px-4 md:px-5 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 hover:bg-emerald-700 hover:shadow-xl transition-all"
-      >
-        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-        </svg>
-        <span className="hidden md:inline">Plan Trip</span>
-        <span className="md:hidden">Trip</span>
-      </button>
-
       {/* Route panel + checkpoint popup */}
       <RoutePanel
         isRoutingMode={isRoutingMode}
@@ -794,18 +782,12 @@ export default function AccessibilityMap({ points }: Props) {
         onAnalyzeDemoRoute={handleAnalyzeDemoRoute}
         routeResult={routeResult}
         onClearRoute={handleClearRoute}
+        map={mapInstance}
       />
       <CheckpointPopup
         checkpoint={selectedCheckpoint}
         onClose={() => setSelectedCheckpoint(null)}
       />
-
-      {/* Routing mode hint */}
-      {isRoutingMode && !routeDest && (
-        <div className="absolute bottom-24 md:bottom-16 left-1/2 -translate-x-1/2 z-10 bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg pointer-events-none">
-          Click anywhere on the map to set your destination
-        </div>
-      )}
 
       {/* Report at current location — desktop pill (hidden on mobile) */}
       <button
@@ -861,10 +843,6 @@ export default function AccessibilityMap({ points }: Props) {
         </>
       )}
 
-      {/* Trip Planner Panel */}
-      {isTripPlannerOpen && (
-        <TripPlannerPanel map={mapRef.current} onClose={() => setIsTripPlannerOpen(false)} />
-      )}
     </div>
   );
 }
