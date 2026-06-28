@@ -1,8 +1,13 @@
 # OpenPath — AI-Powered Accessibility Map for Ho Chi Minh City
 
-OpenPath is a GIS-powered accessibility map built for the **GRAB × UNDP Hackathon**. It helps wheelchair users and people with mobility challenges plan safe, accessible journeys across HCMC by combining community-reported data, multi-modal trip planning, and **real Claude Vision AI analysis** of sidewalk conditions.
+OpenPath is a GIS-powered accessibility map built for the **GRAB × UNDP Hackathon**. It helps wheelchair users and people with mobility challenges plan safe, accessible journeys across HCMC by combining community-reported data, multi-modal trip planning, and **real Gemini AI analysis** of sidewalk conditions.
 
 ---
+
+## Video demo:
+<video width="100%" controls>
+  <source src="https://github.com/PhuocSang44/GRABxUNDP-Hackathon-OpenPath/frontend/public/demo/video_demo.mp4" type="video/mp4">
+</video>
 
 ## Key Features
 
@@ -12,7 +17,7 @@ A unified panel (one button — **"AI Route"**) that combines two complementary 
 #### Accessibility Check
 - Click any destination on the map to plan a walking route
 - The route is broken into checkpoints every ~75 m
-- Each checkpoint is analyzed by **Claude Vision AI** (Anthropic) from a real street-level photo
+- Each checkpoint is analyzed by **Gemini 2.5 Flash Model** (Anthropic) from a real street-level photo
 - Results show: sidewalk availability, surface quality, width, curb ramps, obstacles
 - An aggregate summary gives the overall accessibility rating (Good / Moderate / Poor)
 - **Demo mode**: load a pre-analyzed real route (Binh Duong area) with 11 on-site photos — no API call needed, loads from static JSON instantly
@@ -62,7 +67,7 @@ Sample checkpoints every 75 m along route (Haversine)
 For each checkpoint:
   1. Fetch street-level photo (Mapillary API or Google Street View)
   2. Upload photo to Supabase Storage
-  3. Analyze with Claude Vision (claude-haiku-4-5) → JSON accessibility data
+  3. Analyze with Gemini 2.5 Flash Model → JSON accessibility data
   4. Cache result in PostgreSQL
        ↓
 Aggregate results → RouteResult JSON
@@ -185,7 +190,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 |-------|-----------|
 | Map rendering | MapLibre GL JS + CartoDB Voyager tiles |
 | Routing | OSRM public API (walking profile) |
-| AI vision | Anthropic Claude Haiku (`claude-haiku-4-5-20251001`) |
+| AI vision | Gemini 2.5 Flash Model |
 | Street imagery | Mapillary API v4 (free) / Google Street View |
 | Backend | FastAPI + SQLAlchemy + Alembic |
 | Database | PostgreSQL + PostGIS (hosted on Supabase) |
