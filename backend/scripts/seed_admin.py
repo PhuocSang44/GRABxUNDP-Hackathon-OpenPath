@@ -4,12 +4,12 @@ Usage:
     cd backend
     python -m scripts.seed_admin
 """
-from passlib.context import CryptContext
+import bcrypt
 
 from app.db.database import SessionLocal
 from app.models.user import User
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
@@ -24,7 +24,7 @@ def seed_admin():
             print(f"Admin user '{ADMIN_USERNAME}' already exists — skipping.")
             return
 
-        hashed = pwd_context.hash(ADMIN_PASSWORD)
+        hashed = bcrypt.hashpw(ADMIN_PASSWORD.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         admin = User(
             username=ADMIN_USERNAME,
             hashed_password=hashed,

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+import bcrypt
 
 from app.db.database import SessionLocal
 from app.core.config import settings
@@ -12,7 +12,7 @@ from app.schemas.auth import UserRegister, UserLogin, UserResponse, TokenRespons
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_DAYS = 7
@@ -110,7 +110,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
 
-    hashed = pwd_context.hash(data.password)
+    hashed = bcrypt.hashpw(data.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     user = User(username=data.username, name=data.name, hashed_password=hashed, role="user")
     db.add(user)
     db.commit()
@@ -126,7 +126,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login(data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == data.username).first()
-    if not user or not pwd_context.verify(data.password, user.hashed_password):
+    if not user or not bcrypt.checkpw(data.password.encode('utf-8'), user.hashed_password.encode('utf-8')):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     token = create_access_token(user)

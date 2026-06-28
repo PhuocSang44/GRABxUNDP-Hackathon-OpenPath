@@ -9,7 +9,7 @@ geoalchemy2
 shapely
 supabase
 python-multipart
-passlib[bcrypt]
+bcrypt
 pyjwt
 httpx
 anthropic
