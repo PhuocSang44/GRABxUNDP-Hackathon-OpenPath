@@ -687,12 +687,12 @@ export default function AccessibilityMap({ points }: Props) {
   const handleAnalyzeDemoRoute = async () => {
     setRouteOrigin(DEMO_ORIGIN);
     setRouteDest(DEMO_DEST);
-    setIsRoutingMode(false);
     // Load pre-generated static JSON — no live API or OSRM call during the demo
     const resp = await fetch("/demo/demo_route.json");
     if (!resp.ok) throw new Error("Demo route data not found — run seed_demo_manual.py first");
     const result: RouteResult = await resp.json();
     setRouteResult(result);
+    setIsRoutingMode(false); // after result is ready so the panel never flashes to idle
   };
 
   const handleClearRoute = () => {
