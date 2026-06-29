@@ -4,11 +4,6 @@ OpenPath is a GIS-powered accessibility map built for the **GRAB × UNDP Hackath
 
 ---
 
-## Video demo:
-<video width="100%" controls>
-  <source src="https://github.com/PhuocSang44/GRABxUNDP-Hackathon-OpenPath/frontend/public/demo/video_demo.mp4" type="video/mp4">
-</video>
-
 ## Key Features
 
 ### AI Route Analysis
@@ -20,27 +15,35 @@ A unified panel (one button — **"AI Route"**) that combines two complementary 
 - Each checkpoint is analyzed by **Gemini 2.5 Flash Model** (Anthropic) from a real street-level photo
 - Results show: sidewalk availability, surface quality, width, curb ramps, obstacles
 - An aggregate summary gives the overall accessibility rating (Good / Moderate / Poor)
-- **Demo mode**: load a pre-analyzed real route (Binh Duong area) with 11 on-site photos — no API call needed, loads from static JSON instantly
+- **Demo mode**: load a pre-analyzed real route with 11 on-site photos
+<img width="1267" height="547" alt="image" src="https://github.com/user-attachments/assets/f37f3fd3-f7b6-43a4-90d5-a8f754ff4cf5" />
 
 #### Trip Planner
 - Select a destination from major HCMC landmarks
 - AI plans a multi-modal route: Accessible Taxi → Metro Line 1 → Low-floor Bus → Walking
 - Each leg shows accessibility info, warnings, and duration
 - Route is drawn on the map color-coded by transport mode
+<img width="1147" height="712" alt="image" src="https://github.com/user-attachments/assets/bec9838e-c877-4414-9db2-c26474330cf1" />
 
 ### Accessibility Map
 - Interactive map centred on HCMC (MapLibre GL JS)
 - 8 accessibility point categories: parking, ramps, hospitals, toilets, bus stops, entrances, community reports, accessibility issues
 - Cluster markers at low zoom with photo thumbnails; individual markers at high zoom
 - Click any marker to see score, address, facilities, and photos
+<img width="1917" height="867" alt="image" src="https://github.com/user-attachments/assets/38bc341c-d458-4ef4-b32c-79a078b1954c" />
+<img width="1201" height="560" alt="image" src="https://github.com/user-attachments/assets/463dc163-4a52-4439-84d4-c7734aa927d1" />
 
 ### Filters
 - Filter by category and minimum accessibility score
 - Live count of visible vs total locations
+<img width="357" height="785" alt="image" src="https://github.com/user-attachments/assets/fab775bb-2080-47cc-bbc3-9941e6c675d3" />
+
 
 ### Community Reporting
 - Click anywhere on the map to file a report with location, category, and photo
 - Reports go through admin verification before appearing on the map
+<img width="957" height="540" alt="image" src="https://github.com/user-attachments/assets/7fcd0099-9bda-4065-aed5-8873e8bcfe5a" />
+
 
 ### Admin Dashboard
 - JWT-authenticated admin panel at `/admin`
